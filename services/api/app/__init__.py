@@ -1,1 +1,1 @@
-# Prowler CSPM Suite API
+# Azure CloudGuard API

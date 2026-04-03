@@ -1,10 +1,10 @@
-# Prowler CSPM Suite — local stack.
+# Azure CloudGuard — local stack.
 # Worker uses Docker socket to run Prowler in sibling containers (Docker-outside-of-Docker).
 #
 # If host port 8000 is already in use (common with other dev servers), run:
 #   API_PORT=8001 docker compose up --build
 # The web image is built with VITE_API_URL matching API_PORT so the SPA calls the right origin.
-name: prowler-cspm-suite
+name: azure-cloudguard
 services:
   postgres:
     image: postgres:16-alpine
@@ -104,4 +104,4 @@ services:
 volumes:
   pgdata:
   scan_data:
-    name: prowler_cspm_scan_data
+    name: azure_cloudguard_scan_data

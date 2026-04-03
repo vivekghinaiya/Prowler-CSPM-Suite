@@ -1,12 +1,12 @@
-# Prowler CSPM Suite
+# Azure CloudGuard
 
-Production-oriented monorepo for running **Prowler**-backed cloud security posture management: **FastAPI** API, **Celery** workers, **PostgreSQL**, **Redis**, and a **React** (Vite + Tailwind) UI. Designed local-first via Docker Compose; logical boundaries support splitting services later.
+Production-oriented monorepo for running **Prowler**-backed Azure cloud security posture management: **FastAPI** API, **Celery** workers, **PostgreSQL**, **Redis**, and a **React** (Vite + Tailwind) UI. Designed local-first via Docker Compose; logical boundaries support splitting services later.
 
 ## Features
 
 - **Multi-client management** — organize scans by client or tenant with isolated credentials, scans, and findings per client; cascade deletion keeps things clean
-- **Encrypted credential vault** — AWS, Azure, and GCP credentials stored with server-side encryption; API responses expose metadata only; AWS connectivity test via STS
-- **Orchestrated scanning** — one-click scan launch from the UI; queued execution via Celery; Docker-outside-of-Docker Prowler runs; cancellable jobs; captured Prowler logs with live streaming
+- **Encrypted Azure credential vault** — Azure Service Principal, Managed Identity, and CLI credentials stored with server-side Fernet encryption; API responses expose metadata only; Azure connectivity test via azure-identity
+- **Orchestrated scanning** — one-click scan launch from the UI; queued execution via Celery; Docker-outside-of-Docker Prowler runs against Azure; cancellable jobs; captured Prowler logs with live streaming
 - **Real-time progress** — WebSocket-driven progress percentage and stage updates pushed to the browser during scan execution
 - **Structured findings database** — Prowler JSON-OCSF output parsed and normalized into PostgreSQL; filterable by severity, status, service, and triage state; server-side pagination
 - **Scan diffing** — compare any scan against a baseline; automatic new / open / closed classification; persisted diff with category counts on the dashboard
@@ -31,6 +31,18 @@ docker compose up --build
 
 The worker container needs access to the **Docker socket** to run Prowler in sibling containers (see [docs/SETUP.md](docs/SETUP.md)). On Windows, if the Docker CLI fails from PowerShell, use **WSL** and `docker compose` from your repo path under `/mnt/...` (details in SETUP).
 
+## Azure credentials
+
+Three authentication methods are supported:
+
+| Method | When to use |
+|--------|-------------|
+| **Service Principal** | CI/CD, production — provide Tenant ID, Client ID (App ID), and Client Secret |
+| **Managed Identity** | Azure-hosted workers — no secrets required |
+| **Azure CLI** | Local development — requires `az login` on the host |
+
+Optionally specify Subscription IDs to limit the scan scope; leave blank to scan all subscriptions accessible to the credential.
+
 ## Documentation
 
 | Document | Description |
@@ -46,7 +58,7 @@ The worker container needs access to the **Docker socket** to run Prowler in sib
 | [docs/FRONTEND.md](docs/FRONTEND.md) | Web app, env, proxy, user flows |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Prowler image updates, production notes |
 | [docs/CORE_IMPLEMENTATION.md](docs/CORE_IMPLEMENTATION.md) | Code map: scans, diff, triage |
-| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Spec traceability (incl. bonus gaps) |
+| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Spec traceability |
 | [Prowler official docs](https://docs.prowler.com/) | Upstream reference for scan CLI, output modes (e.g. JSON-OCSF), and compliance concepts used by our worker and findings UI |
 
 Copy [.env.example](.env.example) to `.env` if you want to override compose defaults.

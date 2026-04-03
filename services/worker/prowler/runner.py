@@ -12,21 +12,14 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
-class ProwlerAwsOptions(BaseModel):
-    """Validated scan options passed to Prowler CLI."""
+class ProwlerAzureOptions(BaseModel):
+    """Validated scan options passed to Prowler CLI for Azure."""
 
-    regions: list[str] = Field(default_factory=list)
-
-    @field_validator("regions")
-    @classmethod
-    def validate_regions(cls, v: list[str]) -> list[str]:
-        for r in v:
-            if not re.match(r"^[a-z0-9-]+$", r, re.I):
-                raise ValueError(f"Invalid region: {r!r}")
-        return v
+    # subscription_ids are passed via AZURE_SUBSCRIPTION_IDS env var; no extra CLI args needed here.
+    extra_checks: list[str] = Field(default_factory=list)
 
 
 def _docker_bin() -> str:
@@ -45,26 +38,27 @@ def _docker_bin() -> str:
     )
 
 
-def _env_args(aws_env: dict[str, str]) -> list[str]:
+def _azure_env_args(azure_env: dict[str, str]) -> list[str]:
     out: list[str] = []
-    for k, v in aws_env.items():
-        if k.startswith("AWS_") and v is not None:
+    for k, v in azure_env.items():
+        if k.startswith("AZURE_") and v is not None:
             out.extend(["-e", f"{k}={v}"])
     return out
 
 
-def _prowler_docker_cmd(
+def _prowler_azure_docker_cmd(
     *,
     host_output_dir: Path,
-    aws_env: dict[str, str],
+    azure_env: dict[str, str],
+    auth_flag: str,
     image: str,
-    options: ProwlerAwsOptions,
+    options: ProwlerAzureOptions,
 ) -> list[str]:
     host_output_dir.mkdir(parents=True, exist_ok=True)
     # Share the worker's volumes with the Prowler sibling container so both
     # see the same named Docker volume for /data/scans.  A plain bind-mount
-    # (``-v /data/scans/…:/output``) is resolved by the *host* Docker daemon,
-    # which points to a different location than the named volume the worker uses.
+    # is resolved by the *host* Docker daemon, which points to a different
+    # location than the named volume the worker uses.
     worker_cid = socket.gethostname()
     container_output = str(host_output_dir)
     cmd: list[str] = [
@@ -75,19 +69,17 @@ def _prowler_docker_cmd(
         "0:0",
         "--volumes-from",
         worker_cid,
-        *_env_args(aws_env),
+        *_azure_env_args(azure_env),
         image,
-        "aws",
-        # Prowler exits 3 when any check FAILs (expected). We only fail the pipeline on real errors.
-        # https://docs.prowler.com/user-guide/cli/tutorials/misc#disable-exit-code-3
+        "azure",
+        auth_flag,
+        # Prowler exits 3 when any check FAILs (expected). We only fail on real errors.
         "--ignore-exit-code-3",
         "-M",
         "json-ocsf",
         "--output-directory",
         container_output,
     ]
-    for reg in options.regions:
-        cmd.extend(["--region", reg])
     return cmd
 
 
@@ -95,23 +87,32 @@ def _prowler_docker_cmd(
 _PROGRESS_RE = re.compile(r"(\d+)\s*/\s*(\d+)\s*\[\s*(\d+)%\s*\]")
 
 
-def run_prowler_aws(
+def run_prowler_azure(
     *,
     image: str,
     host_output_dir: Path,
-    aws_env: dict[str, str],
-    options: ProwlerAwsOptions | None = None,
+    azure_env: dict[str, str],
+    auth_flag: str,
+    options: ProwlerAzureOptions | None = None,
     on_log_chunk: Callable[[str], None] | None = None,
     on_progress: Callable[[int, int, int], None] | None = None,
 ) -> tuple[int, str]:
-    """Run Prowler in Docker.
+    """Run Prowler in Docker against Azure.
 
-    ``on_log_chunk``  — called with batched stdout text (~1s / 8KiB).
-    ``on_progress``   — called as ``(completed, total, pct)`` when Prowler
-                        emits progress like ``57/244 [23%]``.
+    ``azure_env``    — AZURE_* environment variables for the Prowler container.
+    ``auth_flag``    — one of ``--sp-env-auth``, ``--managed-identity-auth``, ``--cli-auth``.
+    ``on_log_chunk`` — called with batched stdout text (~1s / 8KiB).
+    ``on_progress``  — called as ``(completed, total, pct)`` when Prowler
+                       emits progress like ``57/244 [23%]``.
     """
-    options = options or ProwlerAwsOptions()
-    cmd = _prowler_docker_cmd(host_output_dir=host_output_dir, aws_env=aws_env, image=image, options=options)
+    options = options or ProwlerAzureOptions()
+    cmd = _prowler_azure_docker_cmd(
+        host_output_dir=host_output_dir,
+        azure_env=azure_env,
+        auth_flag=auth_flag,
+        image=image,
+        options=options,
+    )
 
     if on_log_chunk is None and on_progress is None:
         proc = subprocess.run(
@@ -187,30 +188,3 @@ def run_prowler_aws(
     rc = proc.returncode if proc.returncode is not None else -1
     full_log = "".join(full_parts)
     return rc, full_log
-
-
-def run_prowler_aws_subprocess_no_docker(
-    *,
-    host_output_dir: Path,
-    aws_env: dict[str, str],
-    options: ProwlerAwsOptions | None = None,
-) -> tuple[int, str]:
-    """Fallback for hosts where Prowler is installed locally (not used in Docker worker by default)."""
-    options = options or ProwlerAwsOptions()
-    host_output_dir.mkdir(parents=True, exist_ok=True)
-    out_path = str(host_output_dir.resolve())
-    env = {**os.environ, **aws_env}
-    cmd: list[str] = [
-        "prowler",
-        "aws",
-        "--ignore-exit-code-3",
-        "-M",
-        "json-ocsf",
-        "--output-directory",
-        out_path,
-    ]
-    for reg in options.regions:
-        cmd.extend(["--region", reg])
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=86400, env=env)
-    log = (proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else "")
-    return proc.returncode, log

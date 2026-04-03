@@ -11,14 +11,13 @@ from app.models.base import Base
 
 
 class CredentialProvider(str, enum.Enum):
-    aws = "aws"
     azure = "azure"
-    gcp = "gcp"
 
 
 class CredentialAuthMethod(str, enum.Enum):
-    static_keys = "static_keys"
-    assume_role = "assume_role"
+    service_principal = "service_principal"
+    managed_identity = "managed_identity"
+    cli = "cli"
 
 
 class Credential(Base):

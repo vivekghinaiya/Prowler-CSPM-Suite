@@ -11,11 +11,11 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import SessionLocal
-from app.models.credential import Credential, CredentialProvider
+from app.models.credential import Credential
 from app.models.scan import Scan, ScanStatus
 from app.redis_client import publish_scan_progress
-from app.services.aws_creds import resolve_aws_env_for_credential
-from prowler.runner import ProwlerAwsOptions, _docker_bin, run_prowler_aws
+from app.services.azure_creds import resolve_azure_env_for_credential
+from prowler.runner import ProwlerAzureOptions, _docker_bin, run_prowler_azure
 
 logger = logging.getLogger(__name__)
 
@@ -101,10 +101,6 @@ def execute_scan_task(scan_id: str) -> None:
             _fail_pending(db, sid, "Credential not found")
             return
 
-        if cred.provider != CredentialProvider.aws:
-            _fail_pending(db, sid, "Only AWS scans are supported in this build")
-            return
-
         settings = get_settings()
         out_dir = Path(settings.scan_output_dir) / str(sid)
         now = datetime.now(timezone.utc)
@@ -123,7 +119,7 @@ def execute_scan_task(scan_id: str) -> None:
         publish_scan_progress(sid, {"pct": 5, "stage": "starting_container", "status": "running"})
 
         try:
-            aws_env = resolve_aws_env_for_credential(cred.ciphertext, cred.auth_method)
+            azure_env, auth_flag = resolve_azure_env_for_credential(cred.ciphertext, cred.auth_method)
         except Exception as e:  # noqa: BLE001
             _fail_running(db, sid, str(e))
             return
@@ -179,11 +175,12 @@ def execute_scan_task(scan_id: str) -> None:
                 "checks_total": total,
             })
 
-        code, _log = run_prowler_aws(
+        code, _log = run_prowler_azure(
             image=settings.prowler_image,
             host_output_dir=out_dir,
-            aws_env=aws_env,
-            options=ProwlerAwsOptions(),
+            azure_env=azure_env,
+            auth_flag=auth_flag,
+            options=ProwlerAzureOptions(),
             on_log_chunk=_stream_log,
             on_progress=_on_prowler_progress,
         )

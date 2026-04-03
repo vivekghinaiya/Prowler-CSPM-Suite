@@ -32,7 +32,7 @@ flowchart TB
 
   subgraph external [External]
     GH[GitHub API Prowler releases]
-    Cloud[AWS APIs via Prowler]
+    Cloud[Azure APIs via Prowler]
   end
 
   Browser -->|REST JSON JWT| API
@@ -66,4 +66,4 @@ Prowler does not always expose fine-grained percentage completion. The implement
 
 - Replace Docker-socket worker pattern with **Kubernetes Jobs**, **ECS tasks**, or a dedicated **runner** service.
 - Move scan artifacts to **S3** and use **presigned URLs** for downloads.
-- Replace dev Fernet key with **AWS KMS** or **Secrets Manager** using the same encryption abstraction in code.
+- Replace dev Fernet key with **Azure Key Vault** using the same encryption abstraction in code.

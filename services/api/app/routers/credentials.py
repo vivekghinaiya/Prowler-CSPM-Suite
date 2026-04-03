@@ -11,7 +11,7 @@ from app.models.user import User
 from app.schemas.credentials import CredentialCreate, CredentialOut, CredentialTestResult
 from app.security.audit_log import write_audit_log
 from app.security.crypto import encrypt_json_payload
-from app.services.aws_creds import test_aws_credential
+from app.services.azure_creds import test_azure_credential
 
 router = APIRouter(tags=["credentials"])
 
@@ -46,7 +46,7 @@ def create_credential(
     ciphertext = encrypt_json_payload(payload)
     cred = Credential(
         client_id=client_id,
-        provider=body.provider,
+        provider=CredentialProvider.azure,
         label=body.label,
         auth_method=body.auth_method,
         ciphertext=ciphertext,
@@ -97,13 +97,10 @@ def test_credential(
     cred = db.get(Credential, credential_id)
     if not cred:
         raise HTTPException(status_code=404, detail="Credential not found")
-    if cred.provider != CredentialProvider.aws:
-        raise HTTPException(
-            status_code=400,
-            detail="Credential connectivity test is only implemented for AWS in this build",
-        )
     try:
-        ident = test_aws_credential(cred.ciphertext, cred.auth_method)
-    except ValueError as e:
+        result = test_azure_credential(cred.ciphertext)
+    except (KeyError, ValueError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    return CredentialTestResult(**ident)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"Azure connectivity test failed: {e}") from e
+    return CredentialTestResult(**result)

@@ -52,7 +52,7 @@ export default function ClientsPage() {
       <header className="mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Clients</h1>
-          <p className="text-sm text-content-muted">Create a client, choose a cloud on the next screen, add credentials, then run audits.</p>
+          <p className="text-sm text-content-muted">Create a client, add Azure credentials, then run Prowler audits against your Azure subscriptions.</p>
         </div>
       </header>
 

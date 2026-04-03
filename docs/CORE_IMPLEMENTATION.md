@@ -10,8 +10,8 @@ Pointers to the main logic for **scan trigger**, **diff engine**, and **triage**
 | HTTP entry | `services/api/app/routers/scans.py` — `POST /clients/{client_id}/scans` |
 | Celery dispatch (API) | `services/api/app/celery_client.py` — `send_execute_scan` |
 | Worker execution | `services/worker/tasks/scan_execute.py` — `execute_scan_task` |
-| Prowler invocation | `services/worker/prowler/runner.py` — `run_prowler_aws` |
-| AWS credential resolution | `services/api/app/services/aws_creds.py` — `resolve_aws_env_for_credential` |
+| Prowler invocation | `services/worker/prowler/runner.py` — `run_prowler_azure` |
+| Azure credential resolution | `services/api/app/services/azure_creds.py` — `resolve_azure_env_for_credential` |
 
 Flow: validate credential and optional `previous_scan_id` → insert `scans` (`pending`) → `send_execute_scan` → worker decrypts → `docker run` → `parse_findings` → `run_diff`.
 

@@ -10,7 +10,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Aurora />
       <nav className="sticky top-0 z-30 flex items-center justify-between border-b border-edge-soft bg-surface/80 px-4 py-2.5 backdrop-blur sm:px-6">
         <Link to="/" className="text-lg font-semibold text-content">
-          Prowler CSPM Suite
+          Azure CloudGuard
         </Link>
         <button
           type="button"

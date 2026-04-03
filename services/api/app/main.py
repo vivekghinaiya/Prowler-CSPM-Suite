@@ -15,7 +15,7 @@ async def lifespan(_app: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    app = FastAPI(title="Prowler CSPM Suite", lifespan=lifespan)
+    app = FastAPI(title="Azure CloudGuard", lifespan=lifespan)
 
     origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
     app.add_middleware(

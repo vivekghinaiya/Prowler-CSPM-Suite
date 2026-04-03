@@ -12,8 +12,7 @@ Cross-reference from the product specification to docs and code. “Bonus” ite
 | Microservice-friendly layout | [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) | Separate API/worker images |
 | Client CRUD | [API.md](API.md) | `routers/clients.py` |
 | Credential storage + encryption | [SECURITY.md](SECURITY.md), [DATABASE.md](DATABASE.md) | `security/crypto.py`, `routers/credentials.py` |
-| AWS keys + assume role | [API.md](API.md) | `schemas/credentials.py`, `aws_creds.py` |
-| Azure / GCP providers | [API.md](API.md) | Encrypted credential storage supported; Prowler worker remains AWS-only |
+| Azure credentials (SP / MSI / CLI) | [API.md](API.md) | `schemas/credentials.py`, `azure_creds.py` |
 | Async Prowler scans | [WORKER_AND_PROWLER.md](WORKER_AND_PROWLER.md) | Celery chain |
 | Scan metadata | [DATABASE.md](DATABASE.md) | `scans` table |
 | Prowler in container | [SECURITY.md](SECURITY.md), [WORKER_AND_PROWLER.md](WORKER_AND_PROWLER.md) | `prowler/runner.py` |

@@ -35,9 +35,9 @@ After changing the worker, API, or web app (parser, Prowler flags, UI refetch):
 2. `docker compose pull` (if using a registry tag) or rely on `docker run` pulling on first use.
 3. `docker compose up -d --build worker`
 
-**Production (AWS-oriented)**
+**Production**
 
-- Prefer immutable task definitions (ECS) or pinned tags in Kubernetes.
+- Prefer immutable task definitions (ACI/AKS) or pinned tags in Kubernetes.
 - Automate image digest updates in CI when `prowler_version_check` reports a newer GitHub release; avoid auto-pull on production workers without review.
 
 ## Scaling workers

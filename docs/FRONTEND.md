@@ -19,7 +19,7 @@
 |------|--------|
 | `/login` | Email/password → JWT in `localStorage` |
 | `/` | Client list + create |
-| `/clients/:clientId` | Credentials (AWS static), dashboard poll, scan list, start scan |
+| `/clients/:clientId` | Azure credentials (service principal / managed identity / CLI), dashboard poll, scan list, start scan |
 | `/scans/:scanId` | Progress (WS + poll), label edit, **findings_count** from scan API, **Re-parse findings** (completed scans), findings table + triage, diff tab, Excel export |
 
 ## Findings UI and Prowler concepts

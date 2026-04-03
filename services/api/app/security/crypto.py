@@ -17,7 +17,7 @@ from app.config import get_settings
 
 
 class KmsDecryptPlaceholder:
-    """Reserved for AWS KMS / Azure Key Vault integration."""
+    """Reserved for Azure Key Vault integration."""
 
     def decrypt_data_key(self, _ciphertext: bytes) -> bytes:
         raise NotImplementedError("KMS backend not configured")
@@ -51,13 +51,8 @@ def decrypt_json_payload(ciphertext: bytes) -> dict[str, Any]:
     return json.loads(raw.decode("utf-8"))
 
 
-class AwsStaticKeysPayload(BaseModel):
-    access_key_id: str
-    secret_access_key: str
-    session_token: str | None = None
-
-
-class AwsAssumeRolePayload(BaseModel):
-    role_arn: str
-    external_id: str | None = None
-    base: AwsStaticKeysPayload  # keys used to call sts:AssumeRole
+class AzureServicePrincipalPayload(BaseModel):
+    tenant_id: str
+    client_id: str
+    client_secret: str
+    subscription_ids: list[str] = []

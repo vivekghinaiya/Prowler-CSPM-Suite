@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 
-type Cloud = "aws" | "azure" | "gcp";
-
 type Credential = {
   id: string;
   label: string;
@@ -31,11 +29,13 @@ type Dashboard = {
 
 type Client = { id: string; name: string; description: string | null };
 
-const CLOUDS: { id: Cloud; label: string; short: string }[] = [
-  { id: "aws", label: "Amazon Web Services", short: "AWS" },
-  { id: "azure", label: "Microsoft Azure", short: "Azure" },
-  { id: "gcp", label: "Google Cloud", short: "GCP" },
-];
+type AuthMethod = "service_principal" | "managed_identity" | "cli";
+
+const AUTH_METHOD_LABELS: Record<AuthMethod, string> = {
+  service_principal: "Service Principal",
+  managed_identity: "Managed Identity",
+  cli: "Azure CLI",
+};
 
 const SEV_CLS: Record<string, string> = {
   critical: "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/60 dark:text-red-300 dark:border-red-700/50",
@@ -55,23 +55,25 @@ export default function ClientDetailPage() {
   const nav = useNavigate();
   const qc = useQueryClient();
 
-  const [cloud, setCloud] = useState<Cloud>("aws");
-  const [ak, setAk] = useState("");
-  const [sk, setSk] = useState("");
+  // Azure credential form state
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("service_principal");
   const [azureTenant, setAzureTenant] = useState("");
   const [azureClientId, setAzureClientId] = useState("");
   const [azureSecret, setAzureSecret] = useState("");
-  const [gcpJson, setGcpJson] = useState("");
+  const [azureSubIds, setAzureSubIds] = useState("");
   const [credLabel, setCredLabel] = useState("default");
+
+  // Scan form state
   const [scanLabel, setScanLabel] = useState("");
   const [credId, setCredId] = useState("");
   const [prevScanId, setPrevScanId] = useState("");
+  const [credentialSelectInitialized, setCredentialSelectInitialized] = useState(false);
 
+  // Edit / delete client state
   const [editClientOpen, setEditClientOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [deleteClientOpen, setDeleteClientOpen] = useState(false);
-  const [credentialSelectInitialized, setCredentialSelectInitialized] = useState(false);
 
   const client = useQuery({
     queryKey: ["client", clientId],
@@ -127,50 +129,43 @@ export default function ClientDetailPage() {
   const addCred = useMutation({
     mutationFn: () => {
       const label = credLabel || "default";
-      if (cloud === "aws") {
+      const subIds = azureSubIds
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      if (authMethod === "service_principal") {
         return apiFetch<Credential>(`/api/v1/clients/${clientId}/credentials`, {
           method: "POST",
           body: JSON.stringify({
             label,
-            provider: "aws",
-            auth_method: "static_keys",
-            aws_static: { access_key_id: ak, secret_access_key: sk },
-          }),
-        });
-      }
-      if (cloud === "azure") {
-        return apiFetch<Credential>(`/api/v1/clients/${clientId}/credentials`, {
-          method: "POST",
-          body: JSON.stringify({
-            label,
-            provider: "azure",
-            auth_method: "static_keys",
+            auth_method: "service_principal",
             azure_sp: {
               tenant_id: azureTenant,
               client_id: azureClientId,
               client_secret: azureSecret,
+              subscription_ids: subIds,
             },
           }),
         });
       }
+      // managed_identity / cli — no secrets
       return apiFetch<Credential>(`/api/v1/clients/${clientId}/credentials`, {
         method: "POST",
         body: JSON.stringify({
           label,
-          provider: "gcp",
-          auth_method: "static_keys",
-          gcp_sa: { service_account_json: gcpJson },
+          auth_method: authMethod,
+          azure_sub: { subscription_ids: subIds },
         }),
       });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["creds", clientId] });
-      setAk("");
-      setSk("");
       setAzureTenant("");
       setAzureClientId("");
       setAzureSecret("");
-      setGcpJson("");
+      setAzureSubIds("");
+      setCredLabel("default");
     },
   });
 
@@ -192,32 +187,27 @@ export default function ClientDetailPage() {
     onSuccess: (s) => nav(`/scans/${s.id}`),
   });
 
-  const selectedCred = creds.data?.find((c) => c.id === credId);
-  const scanAwsOnly = selectedCred && selectedCred.provider !== "aws";
-
   const completedScans = useMemo(
     () => scans.data?.filter((s) => s.status === "completed") ?? [],
     [scans.data],
   );
 
+  // Auto-select first available credential
   useEffect(() => {
     if (credentialSelectInitialized || !creds.data?.length) return;
-    const firstAws = creds.data.find((c) => c.provider === "aws");
-    if (firstAws) setCredId(firstAws.id);
+    setCredId(creds.data[0].id);
     setCredentialSelectInitialized(true);
   }, [creds.data, credentialSelectInitialized]);
 
   const credSaveDisabled =
     addCred.isPending ||
-    (cloud === "aws" && (!ak || !sk)) ||
-    (cloud === "azure" && (!azureTenant || !azureClientId || !azureSecret)) ||
-    (cloud === "gcp" && !gcpJson.trim());
+    (authMethod === "service_principal" && (!azureTenant || !azureClientId || !azureSecret));
 
   if (!clientId) return null;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 lg:max-w-5xl xl:max-w-6xl sm:px-6">
-      <Link to="/" className="text-sm text-emerald-600 hover:underline dark:text-emerald-400">
+      <Link to="/" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
         ← Clients
       </Link>
       {client.data && (
@@ -245,6 +235,7 @@ export default function ClientDetailPage() {
         </header>
       )}
 
+      {/* Dashboard */}
       <section className="mb-8 rounded-xl border border-edge-soft bg-surface/40 p-4">
         <h2 className="mb-3 text-lg font-medium">Dashboard</h2>
         {dashboard.data && (
@@ -282,96 +273,91 @@ export default function ClientDetailPage() {
         )}
       </section>
 
+      {/* Azure Credentials */}
       <section className="mb-8 rounded-xl border border-edge-soft bg-surface/40 p-4">
-        <h2 className="mb-1 text-lg font-medium">Cloud credentials</h2>
+        <h2 className="mb-1 text-lg font-medium">Azure credentials</h2>
         <p className="mb-4 text-sm text-content-faint">
-          Choose a provider, then enter secrets. They are encrypted on the server. Prowler scans in this build run on{" "}
-          <span className="text-content-secondary">AWS credentials only</span>; Azure and GCP entries are stored for upcoming
-          scan support and workflows.
+          Add Azure credentials for Prowler to scan this client's Azure subscriptions. Secrets are
+          encrypted on the server and never returned in API responses.
         </p>
 
-        <div className="mb-4 flex flex-wrap gap-2">
-          {CLOUDS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setCloud(c.id)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                cloud === c.id
-                  ? "bg-emerald-600 text-white"
-                  : "border border-edge bg-field text-content-secondary hover:border-content-faint"
-              }`}
-            >
-              {c.short}
-            </button>
-          ))}
-        </div>
-        <p className="mb-4 text-xs text-content-faint">{CLOUDS.find((c) => c.id === cloud)?.label}</p>
-
         <div className="grid gap-3">
-          <input
-            className="rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
-            placeholder="Credential label (e.g. prod, staging)"
-            value={credLabel}
-            onChange={(e) => setCredLabel(e.target.value)}
-          />
-
-          {cloud === "aws" && (
-            <>
-              <input
-                className="rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
-                placeholder="AWS access key ID"
-                value={ak}
-                onChange={(e) => setAk(e.target.value)}
-                autoComplete="off"
-              />
-              <input
-                className="rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
-                placeholder="AWS secret access key"
-                type="password"
-                value={sk}
-                onChange={(e) => setSk(e.target.value)}
-                autoComplete="off"
-              />
-            </>
-          )}
-
-          {cloud === "azure" && (
-            <>
-              <input
-                className="rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
-                placeholder="Directory (tenant) ID"
-                value={azureTenant}
-                onChange={(e) => setAzureTenant(e.target.value)}
-              />
-              <input
-                className="rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
-                placeholder="Application (client) ID"
-                value={azureClientId}
-                onChange={(e) => setAzureClientId(e.target.value)}
-              />
-              <input
-                className="rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
-                placeholder="Client secret"
-                type="password"
-                value={azureSecret}
-                onChange={(e) => setAzureSecret(e.target.value)}
-              />
-            </>
-          )}
-
-          {cloud === "gcp" && (
-            <textarea
-              className="min-h-[160px] w-full rounded-lg border border-edge bg-field px-3 py-2 font-mono text-xs text-content"
-              placeholder='Paste service account JSON (e.g. { "type": "service_account", "project_id": "..." })'
-              value={gcpJson}
-              onChange={(e) => setGcpJson(e.target.value)}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-content-muted">Label</label>
+            <input
+              className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
+              placeholder="e.g. prod, staging"
+              value={credLabel}
+              onChange={(e) => setCredLabel(e.target.value)}
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-content-muted">Auth method</label>
+            <select
+              className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
+              value={authMethod}
+              onChange={(e) => setAuthMethod(e.target.value as AuthMethod)}
+            >
+              <option value="service_principal">Service Principal</option>
+              <option value="managed_identity">Managed Identity</option>
+              <option value="cli">Azure CLI</option>
+            </select>
+          </div>
+
+          {authMethod === "service_principal" && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-content-muted">Directory (Tenant) ID</label>
+                <input
+                  className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  value={azureTenant}
+                  onChange={(e) => setAzureTenant(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-content-muted">Application (Client) ID</label>
+                <input
+                  className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  value={azureClientId}
+                  onChange={(e) => setAzureClientId(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-content-muted">Client secret</label>
+                <input
+                  className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
+                  placeholder="Client secret value"
+                  type="password"
+                  value={azureSecret}
+                  onChange={(e) => setAzureSecret(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+            </>
           )}
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-content-muted">
+              Subscription IDs <span className="font-normal text-content-faint">(optional — comma-separated; leave blank to scan all accessible)</span>
+            </label>
+            <input
+              className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
+              placeholder="sub-id-1, sub-id-2"
+              value={azureSubIds}
+              onChange={(e) => setAzureSubIds(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
         </div>
+
         <button
           type="button"
-          className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+          className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           disabled={credSaveDisabled}
           onClick={() => addCred.mutate()}
         >
@@ -385,10 +371,10 @@ export default function ClientDetailPage() {
               className="flex items-center justify-between gap-2 rounded border border-edge-soft px-3 py-2"
             >
               <span>
-                <span className="mr-2 rounded bg-surface-alt px-1.5 py-0.5 text-xs uppercase text-emerald-600 dark:text-emerald-300">
-                  {c.provider}
+                <span className="mr-2 rounded bg-surface-alt px-1.5 py-0.5 text-xs uppercase text-blue-600 dark:text-blue-300">
+                  azure
                 </span>
-                {c.label} · {c.auth_method}
+                {c.label} · {AUTH_METHOD_LABELS[c.auth_method as AuthMethod] ?? c.auth_method}
               </span>
               <div className="flex items-center gap-2">
                 <span className="hidden font-mono text-xs text-content-faint sm:inline">{c.id.slice(0, 8)}…</span>
@@ -407,11 +393,12 @@ export default function ClientDetailPage() {
         </ul>
       </section>
 
+      {/* Start Azure scan */}
       <section className="rounded-xl border border-edge-soft bg-surface/40 p-4">
-        <h2 className="mb-3 text-lg font-medium">Start audit</h2>
+        <h2 className="mb-3 text-lg font-medium">Start Azure audit</h2>
         <p className="mb-3 text-sm text-content-faint">
-          Prowler execution is wired for <strong className="text-content-secondary">AWS</strong> today. Pick an AWS credential
-          below; Azure/GCP credentials cannot start a scan until the worker adds those providers.
+          Select a saved Azure credential below and optionally compare against a previous scan.
+          Prowler will run against the configured Azure subscriptions.
         </p>
         <div className="grid gap-3">
           <div>
@@ -423,15 +410,11 @@ export default function ClientDetailPage() {
             >
               <option value="">Select a credential…</option>
               {creds.data?.map((c) => (
-                <option key={c.id} value={c.id} disabled={c.provider !== "aws"}>
-                  {c.label} ({c.provider})
-                  {c.provider !== "aws" ? " — Prowler scan not available yet" : ""}
+                <option key={c.id} value={c.id}>
+                  {c.label} ({AUTH_METHOD_LABELS[c.auth_method as AuthMethod] ?? c.auth_method})
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-content-faint">
-              Values are the saved credential IDs. AWS entries can run Prowler; others are disabled.
-            </p>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-content-muted">Scan label</label>
@@ -460,21 +443,18 @@ export default function ClientDetailPage() {
             </select>
           </div>
         </div>
-        {scanAwsOnly && (
-          <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">Selected credential is not AWS — scan will fail. Choose an aws credential.</p>
-        )}
         <button
           type="button"
-          className="mt-3 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
-          disabled={startScan.isPending || !credId || !!scanAwsOnly}
+          className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+          disabled={startScan.isPending || !credId}
           onClick={() => startScan.mutate()}
         >
-          Start Prowler scan (AWS)
+          Start Azure scan (Prowler)
         </button>
         <ul className="mt-6 space-y-2 text-sm">
           {scans.data?.map((s) => (
             <li key={s.id}>
-              <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/scans/${s.id}`}>
+              <Link className="text-blue-600 hover:underline dark:text-blue-400" to={`/scans/${s.id}`}>
                 {s.label || "Scan"} ·{" "}
                 <span className={s.status === "cancelled" ? "text-amber-600 dark:text-amber-400/90" : ""}>{s.status}</span> ·{" "}
                 {s.progress_pct}%
@@ -485,6 +465,7 @@ export default function ClientDetailPage() {
         </ul>
       </section>
 
+      {/* Edit client modal */}
       {editClientOpen && client.data && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/60 p-4">
           <div className="w-full max-w-md rounded-xl border border-edge bg-surface p-6 shadow-xl">
@@ -517,7 +498,7 @@ export default function ClientDetailPage() {
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                 disabled={updateClient.isPending || !editName.trim()}
                 onClick={() =>
                   updateClient.mutate({ name: editName.trim(), description: editDesc.trim() || undefined })
@@ -530,6 +511,7 @@ export default function ClientDetailPage() {
         </div>
       )}
 
+      {/* Delete client modal */}
       {deleteClientOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/60 p-4">
           <div className="w-full max-w-md rounded-xl border border-edge bg-surface p-6 shadow-xl">

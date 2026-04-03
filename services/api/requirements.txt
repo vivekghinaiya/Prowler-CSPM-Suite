@@ -12,6 +12,7 @@ celery[redis]==5.4.0
 redis==5.2.1
 httpx==0.28.1
 openpyxl==3.1.5
-boto3==1.35.76
+azure-identity==1.19.0
+azure-mgmt-subscription==3.1.1
 python-multipart==0.0.20
 email-validator==2.2.0

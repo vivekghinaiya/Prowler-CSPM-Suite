@@ -1,6 +1,6 @@
 # Reference documentation
 
-Use these files as the canonical reference for the Prowler CSPM Suite implementation.
+Use these files as the canonical reference for the Azure CloudGuard implementation.
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** — High-level system design, Mermaid diagram, progress model.
 2. **[FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md)** — Monorepo directories and responsibilities.
@@ -19,4 +19,4 @@ The product **plan** (scope and phased delivery) lives separately from this repo
 
 ## External references
 
-- **[Prowler — official documentation](https://docs.prowler.com/)** — Canonical reference for **how Prowler scans run** (CLI/Docker, AWS provider, flags such as output mode `-M`, output directory), **what the exported files look like** (we import **JSON-OCSF** produced under the scan output directory), and **severity/compliance concepts** that inform how findings are labeled in the UI. When upgrading the Prowler image or changing scan behavior, defer to upstream docs and `prowler aws --help` inside `PROWLER_IMAGE`; see [WORKER_AND_PROWLER.md](WORKER_AND_PROWLER.md) for how this repo wires scan → parse → API → UI.
+- **[Prowler — official documentation](https://docs.prowler.com/)** — Canonical reference for **how Prowler scans run** (CLI/Docker, Azure provider, flags such as output mode `-M`, output directory, `--sp-env-auth`), **what the exported files look like** (we import **JSON-OCSF** produced under the scan output directory), and **severity/compliance concepts** that inform how findings are labeled in the UI. When upgrading the Prowler image or changing scan behavior, defer to upstream docs and `prowler azure --help` inside `PROWLER_IMAGE`; see [WORKER_AND_PROWLER.md](WORKER_AND_PROWLER.md) for how this repo wires scan → parse → API → UI.

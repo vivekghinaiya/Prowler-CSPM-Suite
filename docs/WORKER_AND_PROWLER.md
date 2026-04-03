@@ -6,7 +6,7 @@
 
 | Concern | Where it lives here | Upstream |
 |--------|---------------------|----------|
-| **Scanning** | `services/worker/prowler/runner.py` — `docker run --volumes-from <worker> … <image> aws --ignore-exit-code-3 -M json-ocsf --output-directory /data/scans/{scan_id}` (optional AWS regions); fixed argv, no user-controlled flags | [Prowler CLI misc](https://docs.prowler.com/user-guide/cli/tutorials/misc#disable-exit-code-3) (exit code 3 = failed checks), `prowler aws --help` for flags |
+| **Scanning** | `services/worker/prowler/runner.py` — `docker run --volumes-from <worker> … <image> azure --sp-env-auth --ignore-exit-code-3 -M json-ocsf --output-directory /data/scans/{scan_id}`; fixed argv, no user-controlled flags | [Prowler CLI misc](https://docs.prowler.com/user-guide/cli/tutorials/misc#disable-exit-code-3) (exit code 3 = failed checks), `prowler azure --help` for flags |
 | **Importing data** | `services/worker/tasks/parse_findings.py` walks `SCAN_OUTPUT_DIR/{scan_id}/**/*.json`; `services/api/app/services/finding_parser.py` normalizes **JSON-OCSF** (`finding_info`, `metadata.event_code`, `resources`, `unmapped.compliance`, severity) into `findings` rows | Prowler docs on reporting/output; after image upgrades, compare a sample JSON file to the parser |
 | **UI** | Findings and scan progress come from the API; field meanings align with normalized Prowler concepts — see [FRONTEND.md](FRONTEND.md#findings-ui-and-prowler-concepts) | Severity tiers and compliance framing as documented by Prowler |
 
@@ -36,9 +36,8 @@ The API enqueues work via `app/celery_client.py` using `send_task(...)` so the A
 
 1. **execute_scan**
    - Loads `Scan` + `Credential` from DB.
-   - AWS only in current build; other providers fail fast.
-   - Resolves AWS env vars via `app/services/aws_creds.py` (static keys or STS assume role).
-   - Calls `prowler.runner.run_prowler_aws()` → `docker run --volumes-from <worker> ... prowler aws --ignore-exit-code-3 -M json-ocsf --output-directory /data/scans/{scan_id}`; streams container stdout into `scans.logs` in batches while the scan runs.
+   - Resolves Azure env vars via `app/services/azure_creds.py` (service principal, managed identity, or CLI).
+   - Calls `prowler.runner.run_prowler_azure()` → `docker run --volumes-from <worker> ... prowler azure --sp-env-auth --ignore-exit-code-3 -M json-ocsf --output-directory /data/scans/{scan_id}`; streams container stdout into `scans.logs` in batches while the scan runs.
    - Updates `scans.status`, `logs`, `error_message`, `progress_pct`; publishes Redis progress.
    - On success, delays `parse_findings_task`.
 
@@ -60,8 +59,8 @@ The API enqueues work via `app/celery_client.py` using `send_task(...)` so the A
 ## Prowler Docker image
 
 - Controlled by `PROWLER_IMAGE`. Use the official image **[prowlercloud/prowler](https://hub.docker.com/r/prowlercloud/prowler)**. Default in compose is **`stable`** (latest release); **`latest`** tracks `master` and may be less predictable. The old name `prowler/prowler` is not published and pulls will fail with “access denied”.
-- Runner invokes: `docker run --user 0:0 --volumes-from <worker_cid> … <image> aws --ignore-exit-code-3 -M json-ocsf --output-directory /data/scans/{scan_id}` (see `services/worker/prowler/runner.py`). **`--volumes-from`** shares the worker container's named volume so the Prowler sibling writes to the same `/data/scans` path the worker reads from (a plain `-v /data/scans/…:/output` bind-mount is resolved by the host daemon and misses the named volume — this was the root cause of empty findings). **`--ignore-exit-code-3`** is required because [Prowler exits with code 3 when any check fails](https://docs.prowler.com/user-guide/cli/tutorials/misc#disable-exit-code-3); that is normal for audits with findings—without this flag the platform would mark the scan failed and skip parsing. `--user 0:0` avoids `PermissionError` when the directory is root-owned.
-- Upgrading Prowler may require flag changes; check `prowler aws --help` inside the image if scans fail with a non-zero exit code.
+- Runner invokes: `docker run --user 0:0 --volumes-from <worker_cid> -e AZURE_CLIENT_ID=… -e AZURE_CLIENT_SECRET=… -e AZURE_TENANT_ID=… <image> azure --sp-env-auth --ignore-exit-code-3 -M json-ocsf --output-directory /data/scans/{scan_id}` (see `services/worker/prowler/runner.py`). **`--volumes-from`** shares the worker container's named volume so the Prowler sibling writes to the same `/data/scans` path the worker reads from. **`--ignore-exit-code-3`** is required because [Prowler exits with code 3 when any check fails](https://docs.prowler.com/user-guide/cli/tutorials/misc#disable-exit-code-3); that is normal for audits with findings. `--user 0:0` avoids `PermissionError` when the directory is root-owned. The auth flag (`--sp-env-auth`, `--managed-identity-auth`, `--cli-auth`) is derived from the credential's `auth_method` field.
+- Upgrading Prowler may require flag changes; check `prowler azure --help` inside the image if scans fail with a non-zero exit code.
 - **Auto-update**: Beat runs `prowler_version_check` on a schedule; results are cached. **Pulling** the scan image can be scheduled by setting **`PROWLER_AUTO_PULL=true`** on the worker (see [OPERATIONS.md](OPERATIONS.md)); otherwise pull manually, via `POST /admin/prowler/pull-image`, or update ECS/K8s task images in production.
 
 ## Beat schedule

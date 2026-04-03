@@ -28,7 +28,7 @@ cloudsecurity/
 │   │       ├── models/       # SQLAlchemy ORM
 │   │       ├── schemas/      # Pydantic request/response DTOs
 │   │       ├── routers/      # REST route modules
-│   │       ├── services/     # Domain: scan, diff, parser, export, AWS creds
+│   │       ├── services/     # Domain: scan, diff, parser, export, Azure creds
 │   │       ├── security/     # crypto, JWT helpers, password hashing, audit
 │   │       └── ws/           # WebSocket scan progress
 │   └── worker/

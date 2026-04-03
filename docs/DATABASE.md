@@ -49,9 +49,9 @@ Migrations live in `services/api/alembic/versions/`. Initial revision: `001_init
 |--------|------|--------|
 | id | UUID | PK |
 | client_id | UUID | FK → clients ON DELETE CASCADE |
-| provider | ENUM `credential_provider` | `aws`, `azure`, `gcp` (API currently enforces AWS) |
+| provider | ENUM `credential_provider` | `azure` (always) |
 | label | VARCHAR(255) | |
-| auth_method | ENUM `credential_auth_method` | `static_keys`, `assume_role` |
+| auth_method | ENUM `credential_auth_method` | `service_principal`, `managed_identity`, `cli` |
 | ciphertext | BYTEA | Fernet-encrypted JSON payload |
 | encryption_key_id | VARCHAR(64) | e.g. `fernet-v1` |
 | created_at, rotated_at | TIMESTAMPTZ | |

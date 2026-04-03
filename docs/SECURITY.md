@@ -3,7 +3,7 @@
 ## Credentials at rest
 
 - Cloud secrets are stored only as **Fernet ciphertext** in `credentials.ciphertext` (see `app/security/crypto.py`).
-- **KMS abstraction**: `KmsDecryptPlaceholder` documents where to plug AWS KMS / Azure Key Vault for data-key wrapping without changing call sites.
+- **KMS abstraction**: `KmsDecryptPlaceholder` documents where to plug Azure Key Vault for data-key wrapping without changing call sites.
 - If `ENCRYPTION_KEY` is unset, the app derives a Fernet key from `JWT_SECRET` for **local development only** — unacceptable for production.
 
 ## Transport and session
@@ -25,7 +25,7 @@
 ## Prowler execution sandbox
 
 - Worker invokes Prowler with **`subprocess` + explicit argv** — **no** `shell=True`.
-- CLI arguments are built from validated structures (`ProwlerAwsOptions` in `services/worker/prowler/runner.py`); regions must match a strict pattern.
+- CLI arguments are built from validated structures (`ProwlerAzureOptions` in `services/worker/prowler/runner.py`); no user-controlled flags are interpolated into the command.
 - Prowler runs inside a **separate container** (`docker run`) with credentials passed as `-e` environment variables, not interpolated into a shell string.
 - **Docker socket** on the worker is a high-privilege interface: acceptable for trusted local dev; replace with a remote runner API in production.
 

@@ -34,7 +34,7 @@ export default function LoginPage() {
         className="w-full max-w-md space-y-4 rounded-xl border border-edge-soft bg-surface/80 p-8 shadow-xl backdrop-blur"
       >
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight text-content">Prowler CSPM Suite</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-content">Azure CloudGuard</h1>
           <button
             type="button"
             onClick={toggle}
@@ -52,7 +52,7 @@ export default function LoginPage() {
             )}
           </button>
         </div>
-        <p className="text-sm text-content-muted">Sign in to manage clients and Prowler scans.</p>
+        <p className="text-sm text-content-muted">Sign in to manage clients and Azure security audits.</p>
         {err && <p className="text-sm text-red-600 dark:text-red-400">{err}</p>}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-content-secondary">Email</label>

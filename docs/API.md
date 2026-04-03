@@ -50,73 +50,51 @@
 | GET | `/clients/{client_id}/credentials` | List |
 | POST | `/clients/{client_id}/credentials` | Create (encrypted server-side) |
 | DELETE | `/credentials/{credential_id}` | Delete |
-| POST | `/credentials/{credential_id}/test` | AWS STS `get_caller_identity` |
+| POST | `/credentials/{credential_id}/test` | Azure connectivity test via `SubscriptionClient.list()` |
 
-**AWS static keys body**
-
-```json
-{
-  "label": "prod",
-  "provider": "aws",
-  "auth_method": "static_keys",
-  "aws_static": {
-    "access_key_id": "AKIA...",
-    "secret_access_key": "...",
-    "session_token": null
-  }
-}
-```
-
-**AWS assume role body**
-
-```json
-{
-  "label": "prod-role",
-  "provider": "aws",
-  "auth_method": "assume_role",
-  "aws_assume_role": {
-    "role_arn": "arn:aws:iam::123456789012:role/ProwlerScan",
-    "external_id": null,
-    "base": {
-      "access_key_id": "AKIA...",
-      "secret_access_key": "..."
-    }
-  }
-}
-```
-
-**Azure service principal body** (`auth_method` must be `static_keys`)
+**Service principal body**
 
 ```json
 {
   "label": "prod-sp",
-  "provider": "azure",
-  "auth_method": "static_keys",
+  "auth_method": "service_principal",
   "azure_sp": {
-    "tenant_id": "...",
-    "client_id": "...",
-    "client_secret": "..."
+    "tenant_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "client_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "client_secret": "...",
+    "subscription_ids": ["sub-id-1", "sub-id-2"]
   }
 }
 ```
 
-**GCP service account body** (`service_account_json` is a string containing the full JSON key)
+**Managed Identity body**
 
 ```json
 {
-  "label": "prod-sa",
-  "provider": "gcp",
-  "auth_method": "static_keys",
-  "gcp_sa": {
-    "service_account_json": "{ \"type\": \"service_account\", ... }"
+  "label": "prod-msi",
+  "auth_method": "managed_identity",
+  "azure_sub": {
+    "subscription_ids": ["sub-id-1"]
   }
 }
 ```
 
-**Test response** (AWS only in current build)
+**Azure CLI body**
 
 ```json
-{ "account": "123456789012", "arn": "arn:aws:sts::..." }
+{
+  "label": "local-cli",
+  "auth_method": "cli",
+  "azure_sub": {
+    "subscription_ids": []
+  }
+}
+```
+
+**Test response** (service principal credentials only)
+
+```json
+{ "tenant_id": "xxxxxxxx-...", "subscription_count": 3 }
 ```
 
 ## Scans
