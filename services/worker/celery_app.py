@@ -22,6 +22,7 @@ app.conf.update(
     },
 )
 
+import tasks.ai_tasks  # noqa: E402,F401
 import tasks.parse_findings  # noqa: E402,F401
 import tasks.prowler_image_pull  # noqa: E402,F401
 import tasks.prowler_version_check  # noqa: E402,F401

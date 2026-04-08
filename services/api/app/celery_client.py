@@ -42,3 +42,18 @@ def send_prowler_version_check() -> None:
 
 def send_prowler_image_pull(*, force: bool = False) -> None:
     _app().send_task("cloudaudit.prowler_image_pull", kwargs={"force": force}, queue="cloudaudit")
+
+
+def send_ai_triage(scan_id: UUID) -> str:
+    result = _app().send_task("cloudaudit.ai_triage", args=[str(scan_id)], queue="cloudaudit")
+    return result.id
+
+
+def send_ai_summary(scan_id: UUID) -> str:
+    result = _app().send_task("cloudaudit.ai_summary", args=[str(scan_id)], queue="cloudaudit")
+    return result.id
+
+
+def send_ai_group(scan_id: UUID) -> str:
+    result = _app().send_task("cloudaudit.ai_group", args=[str(scan_id)], queue="cloudaudit")
+    return result.id

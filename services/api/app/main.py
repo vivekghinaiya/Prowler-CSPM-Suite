@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import admin_prowler, auth, clients, credentials, dashboard, diff, exports, findings, scans, triage
+from app.routers import admin_prowler, ai, auth, clients, credentials, dashboard, diff, exports, findings, scans, triage
 from app.ws.scan_progress import router as ws_router
 
 
@@ -37,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(exports.router, prefix=api)
     app.include_router(dashboard.router, prefix=api)
     app.include_router(admin_prowler.router, prefix=api)
+    app.include_router(ai.router, prefix=api)
     app.include_router(ws_router, prefix=api)
 
     @app.get("/health")

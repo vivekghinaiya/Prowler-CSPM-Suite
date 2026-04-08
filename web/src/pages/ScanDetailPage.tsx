@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, FileText, Sparkles } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch, getToken } from "../api/client";
+import AIRemediationCard from "../components/ai/AIRemediationCard";
+import AISummaryModal from "../components/ai/AISummaryModal";
+import AITriageTab from "../components/ai/AITriageTab";
+import SmartGroupsTab from "../components/ai/SmartGroupsTab";
 
 type Scan = {
   id: string;
@@ -116,7 +120,8 @@ export default function ScanDetailPage() {
   const [wsPct, setWsPct] = useState<number | null>(null);
   const [wsStage, setWsStage] = useState<string | null>(null);
   const [wsChecks, setWsChecks] = useState<{ done: number; total: number } | null>(null);
-  const [tab, setTab] = useState<"findings" | "issues" | "diff" | "logs">("findings");
+  const [tab, setTab] = useState<"findings" | "issues" | "smart_groups" | "diff" | "ai_triage" | "logs">("findings");
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [fSeverity, setFSeverity] = useState("");
   const [fStatus, setFStatus] = useState("");
   const [fTriage, setFTriage] = useState("");
@@ -450,6 +455,24 @@ export default function ScanDetailPage() {
               >
                 Export Excel
               </a>
+              {scan.data.status === "completed" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowSummaryModal(true)}
+                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:from-purple-500 hover:to-blue-500"
+                  >
+                    <FileText className="h-3.5 w-3.5" /> AI Summary
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTab("ai_triage")}
+                    className="flex items-center gap-1.5 rounded-lg border border-purple-700/60 bg-purple-950/30 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-950/60"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" /> AI Triage
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -457,18 +480,18 @@ export default function ScanDetailPage() {
 
       {/* Tab navigation */}
       <div className="mb-6 flex border-b border-edge-soft">
-        {(["findings", "issues", "diff", "logs"] as const).map((t) => (
+        {(["findings", "issues", "smart_groups", "diff", "ai_triage", "logs"] as const).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`border-b-2 px-4 py-3 text-sm font-medium capitalize transition-colors ${
+            className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
               tab === t
                 ? "border-blue-500 text-blue-400"
                 : "border-transparent text-content-muted hover:border-edge hover:text-content"
             }`}
           >
-            {t}
+            {t === "smart_groups" ? "Smart Groups ✨" : t === "ai_triage" ? "AI Triage ✨" : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
@@ -627,6 +650,7 @@ export default function ScanDetailPage() {
                               <dt className="text-content-faint">Fingerprint</dt>
                               <dd className="font-mono text-content-muted">{f.fingerprint}</dd>
                             </dl>
+                            <AIRemediationCard findingId={f.id} />
                           </td>
                         </tr>
                       )}
@@ -1037,6 +1061,14 @@ export default function ScanDetailPage() {
         </div>
       )}
 
+      {tab === "smart_groups" && scan.data && (
+        <SmartGroupsTab scanId={scanId} clientId={scan.data.client_id} />
+      )}
+
+      {tab === "ai_triage" && scan.data && (
+        <AITriageTab scanId={scanId} clientId={scan.data.client_id} />
+      )}
+
       {tab === "logs" && (
         <div className="mt-4">
           {scanLogs.isError && <p className="text-sm text-red-600 dark:text-red-400">Could not load logs.</p>}
@@ -1047,6 +1079,14 @@ export default function ScanDetailPage() {
             <p className="mt-2 text-xs text-content-faint">Logs refresh every 2s while the scan is active.</p>
           )}
         </div>
+      )}
+
+      {showSummaryModal && scan.data && (
+        <AISummaryModal
+          scanId={scanId}
+          scanLabel={scan.data.label || "Scan"}
+          onClose={() => setShowSummaryModal(false)}
+        />
       )}
     </div>
   );
