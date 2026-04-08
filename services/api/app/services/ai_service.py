@@ -9,7 +9,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "claude-haiku-4-5-20251001"  # fast + affordable; change to claude-sonnet-4-6 for higher quality
+_MODEL = "claude-opus-4-6"
 _MAX_TOKENS = 4096
 
 
