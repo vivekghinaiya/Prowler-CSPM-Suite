@@ -6,7 +6,7 @@ import logging
 import uuid
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -307,15 +307,16 @@ Respond ONLY with valid JSON. No markdown."""
     )
 
 
-@router.delete("/findings/{finding_id}/ai-remediate", status_code=204)
+@router.delete("/findings/{finding_id}/ai-remediate", status_code=204, response_model=None)
 def clear_ai_remediation(
     finding_id: UUID,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> None:
+) -> Response:
     """Force re-generation by clearing the cached remediation."""
     db.query(AiRemediation).filter(AiRemediation.finding_id == finding_id).delete()
     db.commit()
+    return Response(status_code=204)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -382,16 +383,17 @@ def get_ai_summary(
     return AISummaryStatusOut(status=st["status"], processed=st.get("processed", 0), total=st.get("total", 0))
 
 
-@router.delete("/scans/{scan_id}/ai-summary", status_code=204)
+@router.delete("/scans/{scan_id}/ai-summary", status_code=204, response_model=None)
 def clear_ai_summary(
     scan_id: UUID,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> None:
+) -> Response:
     db.query(AiSummary).filter(AiSummary.scan_id == scan_id).delete()
     db.commit()
     r = get_redis()
     r.delete(_summary_key(scan_id))
+    return Response(status_code=204)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -455,13 +457,14 @@ def get_ai_group(
     return AIGroupingStatusOut(status=st["status"])
 
 
-@router.delete("/scans/{scan_id}/ai-group", status_code=204)
+@router.delete("/scans/{scan_id}/ai-group", status_code=204, response_model=None)
 def clear_ai_group(
     scan_id: UUID,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> None:
+) -> Response:
     db.query(AiFindingGroups).filter(AiFindingGroups.scan_id == scan_id).delete()
     db.commit()
     r = get_redis()
     r.delete(_group_key(scan_id))
+    return Response(status_code=204)
