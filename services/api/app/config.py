@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     docker_available: bool = False
     github_token: str | None = None
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
-    gemini_api_key: str = ""
+    anthropic_api_key: str = ""
 
 
 @lru_cache
