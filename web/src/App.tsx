@@ -3,6 +3,7 @@ import { getToken } from "./api/client";
 import AppShell from "./components/AppShell";
 import ClientDetailPage from "./pages/ClientDetailPage";
 import ClientsPage from "./pages/ClientsPage";
+import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import ScanDetailPage from "./pages/ScanDetailPage";
 
@@ -16,7 +17,15 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route
-        path="/"
+        path="/dashboard"
+        element={
+          <Private>
+            <DashboardPage />
+          </Private>
+        }
+      />
+      <Route
+        path="/clients"
         element={
           <Private>
             <ClientsPage />
@@ -39,7 +48,8 @@ export default function App() {
           </Private>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronRight } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch, getToken } from "../api/client";
 
@@ -41,10 +43,11 @@ type PaginatedFindings = {
 };
 
 const SEV_BADGE: Record<string, string> = {
-  critical: "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/60 dark:text-red-300 dark:border-red-700/50",
-  high: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-700/50",
-  medium: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700/40",
-  low: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/40 dark:text-sky-300 dark:border-sky-700/40",
+  critical: "bg-red-950/60 text-red-300 border-red-700/50",
+  high: "bg-orange-950/50 text-orange-300 border-orange-700/50",
+  medium: "bg-yellow-950/40 text-yellow-300 border-yellow-700/40",
+  low: "bg-sky-950/40 text-sky-300 border-sky-700/40",
+  informational: "bg-slate-800/60 text-slate-300 border-slate-600/50",
 };
 
 const PAGE_SIZE = 50;
@@ -102,8 +105,8 @@ type PaginatedGroupedFindings = {
 };
 
 const DIFF_BADGE: Record<string, string> = {
-  new: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-700/50",
-  open: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-700/50",
+  new: "bg-emerald-950/50 text-emerald-300 border-emerald-700/50",
+  open: "bg-amber-950/50 text-amber-300 border-amber-700/50",
   closed: "bg-surface-alt text-content-muted border-edge",
 };
 
@@ -304,133 +307,175 @@ export default function ScanDetailPage() {
   const pct = wsPct ?? scan.data?.progress_pct ?? 0;
   const stageLabel = wsStage;
 
+  const STATUS_BADGE: Record<string, string> = {
+    completed: "bg-emerald-950/60 text-emerald-300 border-emerald-700/50",
+    running: "bg-blue-950/60 text-blue-300 border-blue-700/50",
+    pending: "bg-yellow-950/40 text-yellow-300 border-yellow-700/40",
+    failed: "bg-red-950/60 text-red-300 border-red-700/50",
+    cancelled: "bg-slate-800/60 text-slate-300 border-slate-600/50",
+  };
+
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8">
-      <Link to={`/clients/${scan.data?.client_id ?? ""}`} className="text-sm text-emerald-600 hover:underline dark:text-emerald-400">
-        ← Client
-      </Link>
+    <div className="mx-auto w-full max-w-screen-2xl px-6 py-8">
+      {/* Breadcrumb */}
+      <div className="mb-6 flex items-center gap-2 text-sm text-content-faint">
+        <Link to="/clients" className="hover:text-content transition-colors">
+          Clients
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        {scan.data?.client_id && (
+          <>
+            <Link
+              to={`/clients/${scan.data.client_id}`}
+              className="hover:text-content transition-colors"
+            >
+              Client
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </>
+        )}
+        <span className="text-content-muted">{scan.data?.label || "Scan"}</span>
+      </div>
+
       {scan.data && (
-        <header className="mt-4 space-y-2">
-          <h1 className="text-2xl font-semibold">Scan</h1>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-content-muted">
-            <span className="rounded-full border border-edge px-2 py-0.5 font-mono text-xs">{scan.data.status}</span>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-28 overflow-hidden rounded-full bg-surface-alt">
-                <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+        <header className="mb-6 space-y-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-content">
+                {scan.data.label || "Scan"}
+              </h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE[scan.data.status] ?? "text-content-muted border-edge"}`}
+                >
+                  {scan.data.status}
+                </span>
+                {(scan.data.status === "running" || scan.data.status === "pending") && (
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-32 overflow-hidden rounded-full bg-surface-alt">
+                      <div
+                        className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-xs text-content-faint">{pct}%</span>
+                  </div>
+                )}
+                {stageLabel && (
+                  <span className="rounded-full border border-edge px-2 py-0.5 font-mono text-xs text-content-secondary">
+                    {stageLabel.replace(/_/g, " ")}
+                    {wsChecks && stageLabel === "running_prowler"
+                      ? ` (${wsChecks.done}/${wsChecks.total})`
+                      : ""}
+                  </span>
+                )}
+                {scan.data.status === "completed" &&
+                  typeof scan.data.findings_count === "number" && (
+                    <span className="text-xs text-content-faint">
+                      {scan.data.findings_count.toLocaleString()} findings
+                    </span>
+                  )}
+                {scan.data.error_message && (
+                  <span className="text-xs text-red-400">{scan.data.error_message}</span>
+                )}
               </div>
-              <span className="font-mono text-xs">{pct}%</span>
             </div>
-            {stageLabel && (
-              <span className="rounded-full border border-edge px-2 py-0.5 font-mono text-xs text-content-secondary">
-                {stageLabel.replace(/_/g, " ")}
-                {wsChecks && stageLabel === "running_prowler" ? ` (${wsChecks.done}/${wsChecks.total})` : ""}
-              </span>
-            )}
-            {scan.data.error_message && <span className="text-red-600 dark:text-red-400">{scan.data.error_message}</span>}
-            {scan.data.status === "completed" && typeof scan.data.findings_count === "number" && (
-              <span className="text-content-faint">Findings in DB: {scan.data.findings_count}</span>
-            )}
-          </div>
-          <div className="flex flex-wrap items-end gap-2">
-            <input
-              className="rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content"
-              value={labelEdit}
-              onChange={(e) => setLabelEdit(e.target.value)}
-              placeholder="Scan label"
-            />
-            <button
-              type="button"
-              className="rounded-lg bg-surface-alt px-3 py-2 text-sm text-content"
-              onClick={() => patchLabel.mutate(labelEdit)}
-            >
-              Save label
-            </button>
-            {(scan.data.status === "pending" || scan.data.status === "running") && (
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
+                value={labelEdit}
+                onChange={(e) => setLabelEdit(e.target.value)}
+                placeholder="Edit scan label"
+              />
               <button
                 type="button"
-                className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/70"
-                disabled={cancelScan.isPending}
-                onClick={() => cancelScan.mutate()}
+                className="rounded-lg border border-edge bg-surface px-3 py-1.5 text-sm text-content-muted transition-colors hover:bg-surface-alt hover:text-content"
+                onClick={() =>
+                  patchLabel.mutate(labelEdit, {
+                    onSuccess: () => toast.success("Label saved"),
+                    onError: (e: Error) => toast.error(e.message),
+                  })
+                }
               >
-                Cancel scan
+                Save
               </button>
-            )}
-            {cancelScan.isError && (
-              <span className="text-sm text-red-600 dark:text-red-400">{cancelScan.error.message}</span>
-            )}
-            {scan.data.status === "completed" && (
-              <button
-                type="button"
-                className="rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-content hover:bg-surface-alt disabled:opacity-50"
-                disabled={reparseFindings.isPending}
-                onClick={() => reparseFindings.mutate()}
+              {(scan.data.status === "pending" || scan.data.status === "running") && (
+                <button
+                  type="button"
+                  className="rounded-lg border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-sm text-amber-200 transition-colors hover:bg-amber-950/70 disabled:opacity-50"
+                  disabled={cancelScan.isPending}
+                  onClick={() =>
+                    cancelScan.mutate(undefined, {
+                      onError: (e: Error) => toast.error(e.message),
+                    })
+                  }
+                >
+                  Cancel scan
+                </button>
+              )}
+              {scan.data.status === "completed" && (
+                <button
+                  type="button"
+                  className="rounded-lg border border-edge bg-surface px-3 py-1.5 text-sm text-content-muted transition-colors hover:bg-surface-alt hover:text-content disabled:opacity-50"
+                  disabled={reparseFindings.isPending}
+                  onClick={() =>
+                    reparseFindings.mutate(undefined, {
+                      onSuccess: () => toast.success("Re-parse queued"),
+                      onError: (e: Error) => toast.error(e.message),
+                    })
+                  }
+                >
+                  {reparseFindings.isPending ? "Re-parsing…" : "Re-parse"}
+                </button>
+              )}
+              <a
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-500"
+                href={`${base || ""}/api/v1/scans/${scanId}/export.xlsx`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const url = `${base || ""}/api/v1/scans/${scanId}/export.xlsx`;
+                  fetch(url, { headers: { Authorization: `Bearer ${getToken()}` } })
+                    .then((r) => r.blob())
+                    .then((b) => {
+                      const dl = URL.createObjectURL(b);
+                      const a = document.createElement("a");
+                      a.href = dl;
+                      a.download = `scan-${scanId}.xlsx`;
+                      a.click();
+                      URL.revokeObjectURL(dl);
+                    });
+                }}
               >
-                Re-parse findings
-              </button>
-            )}
-            {reparseFindings.isError && (
-              <span className="text-sm text-red-600 dark:text-red-400">{reparseFindings.error.message}</span>
-            )}
-            <a
-              className="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white"
-              href={`${base || ""}/api/v1/scans/${scanId}/export.xlsx`}
-              onClick={(e) => {
-                e.preventDefault();
-                const url = `${base || ""}/api/v1/scans/${scanId}/export.xlsx`;
-                fetch(url, {
-                  headers: { Authorization: `Bearer ${getToken()}` },
-                })
-                  .then((r) => r.blob())
-                  .then((b) => {
-                    const url = URL.createObjectURL(b);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `scan-${scanId}.xlsx`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  });
-              }}
-            >
-              Export Excel
-            </a>
+                Export Excel
+              </a>
+            </div>
           </div>
         </header>
       )}
 
-      <div className="mt-6 flex gap-2 border-b border-edge-soft pb-2">
-        <button
-          type="button"
-          className={`rounded-lg px-3 py-1 text-sm ${tab === "findings" ? "bg-surface-alt text-content" : "text-content-muted"}`}
-          onClick={() => setTab("findings")}
-        >
-          Findings
-        </button>
-        <button
-          type="button"
-          className={`rounded-lg px-3 py-1 text-sm ${tab === "issues" ? "bg-surface-alt text-content" : "text-content-muted"}`}
-          onClick={() => setTab("issues")}
-        >
-          Issues
-        </button>
-        <button
-          type="button"
-          className={`rounded-lg px-3 py-1 text-sm ${tab === "diff" ? "bg-surface-alt text-content" : "text-content-muted"}`}
-          onClick={() => setTab("diff")}
-        >
-          Diff
-        </button>
-        <button
-          type="button"
-          className={`rounded-lg px-3 py-1 text-sm ${tab === "logs" ? "bg-surface-alt text-content" : "text-content-muted"}`}
-          onClick={() => setTab("logs")}
-        >
-          Logs
-        </button>
+      {/* Tab navigation */}
+      <div className="mb-6 flex border-b border-edge-soft">
+        {(["findings", "issues", "diff", "logs"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`border-b-2 px-4 py-3 text-sm font-medium capitalize transition-colors ${
+              tab === t
+                ? "border-blue-500 text-blue-400"
+                : "border-transparent text-content-muted hover:border-edge hover:text-content"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
       {tab === "findings" && (
-        <div className="mt-4">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
             <select
               className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content"
               value={fSeverity}

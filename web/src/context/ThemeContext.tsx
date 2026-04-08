@@ -16,7 +16,8 @@ export function useTheme() {
 function getInitial(): Theme {
   const stored = localStorage.getItem("theme") as Theme | null;
   if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // Default to dark for enterprise security tool
+  return "dark";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
