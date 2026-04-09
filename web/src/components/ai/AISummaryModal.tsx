@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ClipboardCopy, FileText, Printer, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ChevronDown, ClipboardCopy, FileText, Printer, Sparkles, X, XCircle } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { apiFetch } from "../../api/client";
+import { useAIHealth } from "../../hooks/useAIHealth";
 
 type SummaryRisk = {
   rank: number;
@@ -55,6 +56,7 @@ export default function AISummaryModal({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const health = useAIHealth();
   const [expandedRisk, setExpandedRisk] = useState<number | null>(null);
   const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
 
@@ -161,8 +163,19 @@ export default function AISummaryModal({
 
         {/* Content */}
         <div className="max-h-[80vh] overflow-y-auto p-6 space-y-6">
+          {/* API key not configured */}
+          {health.data && (!health.data.configured || !health.data.working) && (
+            <div className="flex flex-col items-center py-16">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-600/20">
+                <AlertTriangle className="h-7 w-7 text-amber-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-content">AI Not Available</h3>
+              <p className="mt-2 max-w-md text-center text-sm text-amber-400">{health.data.error}</p>
+            </div>
+          )}
+
           {/* Not started */}
-          {status === "not_started" && (
+          {(!health.data || (health.data.configured && health.data.working)) && status === "not_started" && (
             <div className="flex flex-col items-center py-16">
               <Sparkles className="mb-4 h-10 w-10 text-purple-400" />
               <h3 className="text-lg font-semibold text-content">Generate Executive Summary</h3>
@@ -192,7 +205,12 @@ export default function AISummaryModal({
           {/* Failed */}
           {status === "failed" && (
             <div className="flex flex-col items-center py-8">
-              <p className="text-sm text-red-400">Report generation failed. Check ANTHROPIC_API_KEY.</p>
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-900/30">
+                <XCircle className="h-6 w-6 text-red-400" />
+              </div>
+              <p className="max-w-md text-center text-sm text-red-400">
+                {(data as unknown as { error?: string })?.error || "Report generation failed. Check ANTHROPIC_API_KEY."}
+              </p>
               <button
                 type="button"
                 onClick={() => trigger.mutate()}

@@ -12,12 +12,19 @@ from pydantic import BaseModel, Field
 # Shared
 # ──────────────────────────────────────────────────────────────────────────────
 
+class AIHealthOut(BaseModel):
+    configured: bool
+    working: bool
+    error: str = ""
+
+
 class AIJobStatus(BaseModel):
     """Lightweight status response while an AI job runs asynchronously."""
 
     status: str  # not_started | pending | running | completed | failed
     processed: int = 0
     total: int = 0
+    error: str = ""
     error: str | None = None
 
 

@@ -23,9 +23,30 @@ class AIService:
     def __init__(self, api_key: str) -> None:
         self._api_key = api_key
 
+    def validate_key(self) -> tuple[bool, str]:
+        """Test the API key with a minimal call. Returns (ok, error_message)."""
+        if not self._api_key:
+            return False, "ANTHROPIC_API_KEY is not configured. Set it in your .env file."
+        try:
+            import anthropic  # noqa: PLC0415
+            client = anthropic.Anthropic(api_key=self._api_key)
+            client.messages.create(
+                model=_MODEL,
+                max_tokens=1,
+                messages=[{"role": "user", "content": "hi"}],
+            )
+            return True, ""
+        except Exception as exc:  # noqa: BLE001
+            msg = str(exc)
+            if "401" in msg or "authentication" in msg.lower() or "api_key" in msg.lower():
+                return False, "API key is invalid or expired. Check your ANTHROPIC_API_KEY."
+            if "403" in msg or "permission" in msg.lower():
+                return False, "API key does not have permission to use this model."
+            return False, f"API key validation failed: {msg[:200]}"
+
     def generate(self, prompt: str, *, max_retries: int = 3) -> str:
         if not self._api_key:
-            raise AIServiceError("ANTHROPIC_API_KEY is not configured")
+            raise AIServiceError("ANTHROPIC_API_KEY is not configured. Set it in your .env file.")
 
         import anthropic  # lazy import — not available in dev env
 

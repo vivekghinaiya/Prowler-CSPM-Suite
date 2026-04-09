@@ -20,6 +20,7 @@ from app.redis_client import get_redis
 from app.schemas.ai import (
     AIGroupingOut,
     AIGroupingStatusOut,
+    AIHealthOut,
     AIRemediationOut,
     AISmartGroup,
     AISummaryOut,
@@ -34,6 +35,22 @@ from app.security.audit_log import write_audit_log
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["ai"])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Health / key validation
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/ai/health", response_model=AIHealthOut)
+def ai_health(user: User = Depends(get_current_user)) -> AIHealthOut:
+    """Validate that the Anthropic API key is configured and working."""
+    from app.services.ai_service import get_ai_service  # noqa: PLC0415
+    ai = get_ai_service()
+    if not ai._api_key:
+        return AIHealthOut(configured=False, working=False,
+                           error="ANTHROPIC_API_KEY is not configured. Set it in your .env file.")
+    ok, err = ai.validate_key()
+    return AIHealthOut(configured=True, working=ok, error=err)
 
 # ── Redis status key helpers ──────────────────────────────────────────────────
 

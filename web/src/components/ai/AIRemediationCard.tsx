@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, ClipboardCopy, RefreshCw, Sparkles, Terminal
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { apiFetch } from "../../api/client";
+import { useAIHealth } from "../../hooks/useAIHealth";
 
 type RemediationStep = {
   step_number: number;
@@ -58,13 +59,18 @@ function CodeBlock({ code, label }: { code: string; label: string }) {
 
 export default function AIRemediationCard({ findingId }: { findingId: string }) {
   const qc = useQueryClient();
+  const health = useAIHealth();
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
-  const { data, isLoading, isError } = useQuery<RemediationResult>({
+  // Don't auto-fetch if key isn't configured
+  const keyReady = !health.data || (health.data.configured && health.data.working);
+
+  const { data, isLoading, isError, error } = useQuery<RemediationResult>({
     queryKey: ["ai-remediate", findingId],
     queryFn: () => apiFetch(`/api/v1/findings/${findingId}/ai-remediate`, { method: "POST" }),
     staleTime: Infinity,
     retry: 1,
+    enabled: keyReady,
   });
 
   const regenMutation = useMutation({
@@ -79,6 +85,11 @@ export default function AIRemediationCard({ findingId }: { findingId: string }) 
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Key not configured — don't show card at all
+  if (health.data && (!health.data.configured || !health.data.working)) {
+    return null;
+  }
+
   if (isLoading || regenMutation.isPending) {
     return (
       <div className="mt-4 flex items-center gap-3 rounded-xl border border-purple-800/40 bg-purple-950/20 px-4 py-4">
@@ -91,9 +102,10 @@ export default function AIRemediationCard({ findingId }: { findingId: string }) 
   }
 
   if (isError) {
+    const errMsg = error instanceof Error ? error.message : "AI remediation unavailable — check ANTHROPIC_API_KEY.";
     return (
       <div className="mt-4 rounded-xl border border-red-800/50 bg-red-950/20 px-4 py-3 text-sm text-red-300">
-        AI remediation unavailable — check ANTHROPIC_API_KEY configuration.
+        {errMsg}
       </div>
     );
   }

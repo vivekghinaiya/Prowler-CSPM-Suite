@@ -70,6 +70,14 @@ def ai_triage_task(scan_id: str) -> None:
     try:
         _set_status(key, {"status": "running", "processed": 0, "total": 0})
 
+        # Validate API key before doing any DB work
+        ai = get_ai_service()
+        ok, err = ai.validate_key()
+        if not ok:
+            _set_status(key, {"status": "failed", "error": err})
+            logger.error("AI triage aborted — key validation failed: %s", err)
+            return
+
         scan = db.get(Scan, sid)
         if not scan:
             _set_status(key, {"status": "failed", "error": "Scan not found"})
@@ -98,7 +106,6 @@ def ai_triage_task(scan_id: str) -> None:
             _set_status(key, {"status": "completed", "processed": 0, "total": 0})
             return
 
-        ai = get_ai_service()
         batch_size = 20
         processed = 0
 
@@ -175,6 +182,14 @@ def ai_summary_task(scan_id: str) -> None:
     db = SessionLocal()
     try:
         _set_status(key, {"status": "running"})
+
+        # Validate API key before doing any DB work
+        ai = get_ai_service()
+        ok, err = ai.validate_key()
+        if not ok:
+            _set_status(key, {"status": "failed", "error": err})
+            logger.error("AI summary aborted — key validation failed: %s", err)
+            return
 
         scan = db.get(Scan, sid)
         if not scan:
@@ -253,7 +268,6 @@ overall_rating must be one of: Critical, Poor, Fair, Good, Excellent.
 overall_score is 0-100 (higher is better security posture).
 Respond ONLY with valid JSON. No markdown."""
 
-        ai = get_ai_service()
         content = ai.generate_json(prompt)
 
         row = AiSummary(scan_id=sid, client_id=scan.client_id, content=content)
@@ -285,6 +299,14 @@ def ai_group_task(scan_id: str) -> None:
     try:
         _set_status(key, {"status": "running"})
 
+        # Validate API key before doing any DB work
+        ai = get_ai_service()
+        ok, err = ai.validate_key()
+        if not ok:
+            _set_status(key, {"status": "failed", "error": err})
+            logger.error("AI grouping aborted — key validation failed: %s", err)
+            return
+
         scan = db.get(Scan, sid)
         if not scan:
             _set_status(key, {"status": "failed", "error": "Scan not found"})
@@ -304,7 +326,6 @@ def ai_group_task(scan_id: str) -> None:
             _set_status(key, {"status": "completed"})
             return
 
-        ai = get_ai_service()
         all_groups: list[dict] = []
         batch_size = 50
 

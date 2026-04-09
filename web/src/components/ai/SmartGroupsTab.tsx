@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Sparkles, Wrench } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, Sparkles, Wrench, XCircle } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { apiFetch } from "../../api/client";
+import { useAIHealth } from "../../hooks/useAIHealth";
 
 type SmartGroup = {
   group_id: string;
@@ -49,6 +50,7 @@ export default function SmartGroupsTab({
   clientId: string;
 }) {
   const qc = useQueryClient();
+  const health = useAIHealth();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"count" | "severity" | "effort">("count");
 
@@ -96,6 +98,19 @@ export default function SmartGroupsTab({
   const status = data?.status ?? "not_started";
   const grouping = data?.grouping;
 
+  // ── Health / key check ───────────────────────────────────────────────────
+  if (health.data && (!health.data.configured || !health.data.working)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-600/20">
+          <AlertTriangle className="h-7 w-7 text-amber-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-content">AI Not Available</h3>
+        <p className="mt-2 max-w-md text-center text-sm text-amber-400">{health.data.error}</p>
+      </div>
+    );
+  }
+
   // ── Not started ──────────────────────────────────────────────────────────
   if (status === "not_started") {
     return (
@@ -135,9 +150,13 @@ export default function SmartGroupsTab({
   }
 
   if (status === "failed") {
+    const errMsg = (data as unknown as { error?: string })?.error || "AI grouping failed. Check ANTHROPIC_API_KEY and retry.";
     return (
       <div className="flex flex-col items-center py-12">
-        <p className="text-sm text-red-400">AI grouping failed. Check ANTHROPIC_API_KEY and retry.</p>
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-900/30">
+          <XCircle className="h-6 w-6 text-red-400" />
+        </div>
+        <p className="max-w-md text-center text-sm text-red-400">{errMsg}</p>
         <button
           type="button"
           onClick={() => trigger.mutate()}
