@@ -36,26 +36,11 @@ type Dashboard = {
 };
 
 const SEV_COLORS: Record<string, string> = {
-  critical: "#ef4444",
-  high: "#f97316",
-  medium: "#eab308",
-  low: "#3b82f6",
-  informational: "#64748b",
-};
-
-const SEV_BG: Record<string, string> = {
-  critical: "bg-red-950/60 text-red-300 border-red-700/50",
-  high: "bg-orange-950/50 text-orange-300 border-orange-700/50",
-  medium: "bg-yellow-950/40 text-yellow-300 border-yellow-700/40",
-  low: "bg-sky-950/40 text-sky-300 border-sky-700/40",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  completed: "bg-emerald-950/60 text-emerald-300 border-emerald-700/50",
-  running: "bg-blue-950/60 text-blue-300 border-blue-700/50",
-  pending: "bg-yellow-950/40 text-yellow-300 border-yellow-700/40",
-  failed: "bg-red-950/60 text-red-300 border-red-700/50",
-  cancelled: "bg-slate-800/60 text-slate-300 border-slate-600/50",
+  critical: "#ff003c",
+  high: "#ff6400",
+  medium: "#ffbe00",
+  low: "#00d4ff",
+  informational: "#4a4a5a",
 };
 
 function SummaryCard({
@@ -63,30 +48,45 @@ function SummaryCard({
   label,
   value,
   sub,
-  accent,
+  accentColor,
   pulse,
 }: {
   icon: React.ElementType;
   label: string;
   value: number | string;
   sub?: string;
-  accent: string;
+  accentColor: string;
   pulse?: boolean;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-edge-soft bg-surface p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="card-cyber p-5">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-content-faint">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-content">{value}</p>
-          {sub && <p className="mt-1 text-xs text-content-muted">{sub}</p>}
+        <div className="min-w-0 flex-1">
+          <p
+            className="text-[10px] font-medium uppercase tracking-[2px]"
+            style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+          >
+            {label}
+          </p>
+          <p
+            className="mt-2 text-3xl font-black"
+            style={{ color: accentColor, fontFamily: '"Orbitron", sans-serif', textShadow: `0 0 12px ${accentColor}40` }}
+          >
+            {value}
+          </p>
+          {sub && (
+            <p className="mt-1 text-xs text-content-faint">{sub}</p>
+          )}
         </div>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${accent}`}>
-          <Icon className="h-5 w-5" />
+        <div
+          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+          style={{ background: `${accentColor}14`, border: `1px solid ${accentColor}30` }}
+        >
+          <Icon className="h-5 w-5" style={{ color: accentColor }} />
           {pulse && (
-            <span className="absolute right-4 top-4 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+            <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ background: "#ff003c" }} />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: "#ff003c" }} />
             </span>
           )}
         </div>
@@ -172,45 +172,60 @@ export default function DashboardPage() {
   const isLoading = clients.isLoading;
   const totalClients = clients.data?.length ?? 0;
 
+  const tooltipStyle = {
+    background: "rgba(10,10,18,0.96)",
+    border: "1px solid rgba(0,255,65,0.2)",
+    borderRadius: "8px",
+    color: "#e0e0e0",
+    fontSize: "12px",
+    fontFamily: '"JetBrains Mono", monospace',
+    backdropFilter: "blur(8px)",
+  };
+
   return (
     <div className="mx-auto max-w-screen-xl px-6 py-8">
       {/* Page header */}
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-content">Dashboard</h1>
-        <p className="mt-1 text-sm text-content-muted">
-          Security posture overview across all Azure tenants
+      <header className="mb-8 pt-2 md:pt-0">
+        <h1
+          className="text-xl font-black uppercase tracking-widest"
+          style={{ fontFamily: '"Orbitron", sans-serif', color: "#00ff41", textShadow: "0 0 16px rgba(0,255,65,0.3)" }}
+        >
+          Security Dashboard
+        </h1>
+        <p className="mt-1 text-xs text-content-muted">
+          Threat posture overview · All Azure tenants
         </p>
       </header>
 
       {/* Summary cards */}
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4 stagger">
         <SummaryCard
           icon={Building2}
-          label="Total Clients"
+          label="Clients"
           value={isLoading ? "—" : totalClients}
           sub={totalClients === 1 ? "tenant" : "tenants"}
-          accent="bg-blue-600/20 text-blue-400"
+          accentColor="#00d4ff"
         />
         <SummaryCard
           icon={FileSearch}
           label="Total Scans"
           value={isLoading ? "—" : totalScans}
           sub="all time"
-          accent="bg-indigo-600/20 text-indigo-400"
+          accentColor="#00ff41"
         />
         <SummaryCard
           icon={AlertTriangle}
-          label="Total Findings"
+          label="Findings"
           value={isLoading ? "—" : aggStats.totalFindings}
           sub="across all scans"
-          accent="bg-yellow-600/20 text-yellow-400"
+          accentColor="#ffbe00"
         />
         <SummaryCard
           icon={ShieldAlert}
-          label="Critical Issues"
+          label="Critical"
           value={isLoading ? "—" : aggStats.criticalCount}
           sub="require attention"
-          accent="bg-red-600/20 text-red-400"
+          accentColor="#ff003c"
           pulse={aggStats.criticalCount > 0}
         />
       </div>
@@ -219,8 +234,11 @@ export default function DashboardPage() {
       {aggStats.severityChart.length > 0 && (
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Severity donut */}
-          <div className="rounded-xl border border-edge-soft bg-surface p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-content-faint">
+          <div className="card-cyber p-5">
+            <h2
+              className="mb-4 text-[10px] font-semibold uppercase tracking-[2px]"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+            >
               Findings by Severity
             </h2>
             <ResponsiveContainer width="100%" height={220}>
@@ -238,20 +256,12 @@ export default function DashboardPage() {
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: "rgb(18 30 48)",
-                    border: "1px solid rgb(40 60 92)",
-                    borderRadius: "8px",
-                    color: "rgb(226 232 240)",
-                    fontSize: "13px",
-                  }}
-                />
+                <Tooltip contentStyle={tooltipStyle} />
                 <Legend
                   iconType="circle"
                   iconSize={8}
                   formatter={(value) => (
-                    <span style={{ color: "rgb(120 144 172)", fontSize: "12px" }}>{value}</span>
+                    <span style={{ color: "#7a7a8a", fontSize: "11px", fontFamily: '"JetBrains Mono", monospace' }}>{value}</span>
                   )}
                 />
               </PieChart>
@@ -259,8 +269,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Top services bar */}
-          <div className="rounded-xl border border-edge-soft bg-surface p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-content-faint">
+          <div className="card-cyber p-5">
+            <h2
+              className="mb-4 text-[10px] font-semibold uppercase tracking-[2px]"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+            >
               Top Azure Services
             </h2>
             {aggStats.topServices.length > 0 ? (
@@ -272,7 +285,7 @@ export default function DashboardPage() {
                 >
                   <XAxis
                     type="number"
-                    tick={{ fill: "rgb(72 92 120)", fontSize: 11 }}
+                    tick={{ fill: "#4a4a5a", fontSize: 11, fontFamily: '"JetBrains Mono", monospace' }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -280,21 +293,12 @@ export default function DashboardPage() {
                     type="category"
                     dataKey="name"
                     width={90}
-                    tick={{ fill: "rgb(120 144 172)", fontSize: 11 }}
+                    tick={{ fill: "#7a7a8a", fontSize: 11, fontFamily: '"JetBrains Mono", monospace' }}
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip
-                    contentStyle={{
-                      background: "rgb(18 30 48)",
-                      border: "1px solid rgb(40 60 92)",
-                      borderRadius: "8px",
-                      color: "rgb(226 232 240)",
-                      fontSize: "13px",
-                    }}
-                    cursor={{ fill: "rgba(59,130,246,0.08)" }}
-                  />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="#3b82f6" />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(0,255,65,0.04)" }} />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="#00d4ff" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -307,35 +311,38 @@ export default function DashboardPage() {
       {/* Recent scans + Clients grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent scans */}
-        <div className="rounded-xl border border-edge-soft bg-surface shadow-sm">
-          <div className="border-b border-edge-soft px-5 py-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content-faint">
+        <div className="card-cyber overflow-hidden">
+          <div
+            className="px-5 py-4"
+            style={{ borderBottom: "1px solid rgba(0,255,65,0.08)" }}
+          >
+            <h2
+              className="text-[10px] font-semibold uppercase tracking-[2px]"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+            >
               Recent Scans
             </h2>
           </div>
-          <div className="divide-y divide-edge-soft">
+          <div>
             {allScans.length === 0 && !isLoading && (
-              <p className="px-5 py-8 text-center text-sm text-content-faint">No scans yet</p>
+              <p className="px-5 py-8 text-center text-xs text-content-faint">No scans yet</p>
             )}
             {allScans.map((s) => (
               <Link
                 key={s.id}
                 to={`/scans/${s.id}`}
                 className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-surface-alt"
+                style={{ borderBottom: "1px solid rgba(0,255,65,0.04)" }}
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-content">
+                  <p className="truncate text-xs font-medium text-content">
                     {s.label || "Scan"}
                   </p>
-                  <p className="text-xs text-content-faint">{s.clientName}</p>
+                  <p className="text-[10px] text-content-faint">{s.clientName}</p>
                 </div>
                 <div className="flex items-center gap-3 pl-4">
-                  <span
-                    className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[s.status] ?? "text-content-muted"}`}
-                  >
-                    {s.status}
-                  </span>
-                  <span className="text-xs text-content-faint">
+                  <span className={`badge badge-${s.status}`}>{s.status}</span>
+                  <span className="text-[10px] text-content-faint">
                     {new Date(s.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -345,26 +352,33 @@ export default function DashboardPage() {
         </div>
 
         {/* Client overview */}
-        <div className="rounded-xl border border-edge-soft bg-surface shadow-sm">
-          <div className="flex items-center justify-between border-b border-edge-soft px-5 py-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content-faint">
+        <div className="card-cyber overflow-hidden">
+          <div
+            className="flex items-center justify-between px-5 py-4"
+            style={{ borderBottom: "1px solid rgba(0,255,65,0.08)" }}
+          >
+            <h2
+              className="text-[10px] font-semibold uppercase tracking-[2px]"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+            >
               Clients
             </h2>
             <Link
               to="/clients"
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              className="text-[10px] transition-colors"
+              style={{ color: "#00d4ff", fontFamily: '"Orbitron", sans-serif', letterSpacing: "1px" }}
             >
               View all →
             </Link>
           </div>
-          <div className="divide-y divide-edge-soft">
+          <div>
             {isLoading && (
-              <p className="px-5 py-8 text-center text-sm text-content-faint">Loading…</p>
+              <p className="px-5 py-8 text-center text-xs text-content-faint">Loading…</p>
             )}
             {!isLoading && totalClients === 0 && (
-              <p className="px-5 py-8 text-center text-sm text-content-faint">
+              <p className="px-5 py-8 text-center text-xs text-content-faint">
                 No clients yet —{" "}
-                <Link to="/clients" className="text-blue-400 hover:underline">
+                <Link to="/clients" style={{ color: "#00d4ff" }} className="hover:underline">
                   add one
                 </Link>
               </p>
@@ -378,24 +392,22 @@ export default function DashboardPage() {
                   key={c.id}
                   to={`/clients/${c.id}`}
                   className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-surface-alt"
+                  style={{ borderBottom: "1px solid rgba(0,255,65,0.04)" }}
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-content">{c.name}</p>
-                    <p className="text-xs text-content-faint">
+                    <p className="truncate text-xs font-medium text-content">{c.name}</p>
+                    <p className="text-[10px] text-content-faint">
                       {clientScans.length} scan{clientScans.length !== 1 ? "s" : ""}
                       {lastScan ? ` · last ${new Date(lastScan.created_at).toLocaleDateString()}` : ""}
                     </p>
                   </div>
                   {dash && dash.total_findings > 0 && (
                     <div className="flex items-center gap-1 pl-4">
-                      {(["critical", "high", "medium", "low"] as const)
+                      {(["critical", "high", "medium"] as const)
                         .filter((s) => (dash.by_severity[s] ?? 0) > 0)
                         .slice(0, 3)
                         .map((s) => (
-                          <span
-                            key={s}
-                            className={`inline-flex rounded-full border px-1.5 py-0.5 text-xs font-semibold ${SEV_BG[s]}`}
-                          >
+                          <span key={s} className={`badge badge-${s}`}>
                             {dash.by_severity[s]}
                           </span>
                         ))}

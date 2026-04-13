@@ -48,18 +48,18 @@ const AUTH_LABELS: Record<AuthMethod, string> = {
 };
 
 const SEV_BADGE: Record<string, string> = {
-  critical: "bg-red-950/60 text-red-300 border-red-700/50",
-  high: "bg-orange-950/50 text-orange-300 border-orange-700/50",
-  medium: "bg-yellow-950/40 text-yellow-300 border-yellow-700/40",
-  low: "bg-sky-950/40 text-sky-300 border-sky-700/40",
+  critical: "badge badge-critical",
+  high: "badge badge-high",
+  medium: "badge badge-medium",
+  low: "badge badge-low",
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  completed: "bg-emerald-950/60 text-emerald-300 border-emerald-700/50",
-  running: "bg-blue-950/60 text-blue-300 border-blue-700/50",
-  pending: "bg-yellow-950/40 text-yellow-300 border-yellow-700/40",
-  failed: "bg-red-950/60 text-red-300 border-red-700/50",
-  cancelled: "bg-slate-800/60 text-slate-300 border-slate-600/50",
+  completed: "badge badge-completed",
+  running: "badge badge-running",
+  pending: "badge badge-pending",
+  failed: "badge badge-failed",
+  cancelled: "badge badge-cancelled",
 };
 
 type Tab = "dashboard" | "credentials" | "scans";
@@ -79,11 +79,22 @@ function TabBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+      className="flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-medium transition-colors"
+      style={
         active
-          ? "border-blue-500 text-blue-400"
-          : "border-transparent text-content-muted hover:border-edge hover:text-content"
-      }`}
+          ? {
+              borderColor: "#00ff41",
+              color: "#00ff41",
+              fontFamily: '"Orbitron", sans-serif',
+              letterSpacing: "1px",
+            }
+          : {
+              borderColor: "transparent",
+              color: "#4a4a5a",
+              fontFamily: '"Orbitron", sans-serif',
+              letterSpacing: "1px",
+            }
+      }
     >
       <Icon className="h-4 w-4" />
       {label}
@@ -267,36 +278,33 @@ export default function ClientDetailPage() {
   return (
     <div className="mx-auto max-w-screen-xl px-6 py-8">
       {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-content-faint">
-        <Link to="/clients" className="hover:text-content transition-colors">
+      <div className="mb-6 flex items-center gap-2 pt-2 text-xs text-content-faint md:pt-0">
+        <Link to="/clients" className="hover:text-content transition-colors" style={{ color: "rgba(0,255,65,0.5)" }}>
           Clients
         </Link>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span className="text-content-muted">{client.data?.name ?? "…"}</span>
+        <span style={{ color: "#7a7a8a" }}>{client.data?.name ?? "…"}</span>
       </div>
 
       {/* Client header */}
       {client.data && (
         <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-content">{client.data.name}</h1>
+            <h1
+              className="text-xl font-black uppercase tracking-widest"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#00ff41", textShadow: "0 0 16px rgba(0,255,65,0.3)" }}
+            >
+              {client.data.name}
+            </h1>
             {client.data.description && (
-              <p className="mt-1 text-sm text-content-muted">{client.data.description}</p>
+              <p className="mt-1 text-xs text-content-muted">{client.data.description}</p>
             )}
           </div>
           <div className="flex gap-2">
-            <button
-              type="button"
-              className="rounded-lg border border-edge px-3 py-1.5 text-sm text-content-muted transition-colors hover:bg-surface-alt hover:text-content"
-              onClick={openEditClient}
-            >
+            <button type="button" className="btn-cyber-ghost" onClick={openEditClient}>
               Edit
             </button>
-            <button
-              type="button"
-              className="rounded-lg border border-red-800/60 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-950/40"
-              onClick={() => setDeleteClientOpen(true)}
-            >
+            <button type="button" className="btn-cyber-danger" onClick={() => setDeleteClientOpen(true)}>
               Delete
             </button>
           </div>
@@ -304,7 +312,7 @@ export default function ClientDetailPage() {
       )}
 
       {/* Tab navigation */}
-      <div className="mb-6 flex border-b border-edge-soft">
+      <div className="mb-6 flex border-b" style={{ borderColor: "rgba(0,255,65,0.1)" }}>
         <TabBtn
           active={tab === "dashboard"}
           onClick={() => setTab("dashboard")}
@@ -330,27 +338,20 @@ export default function ClientDetailPage() {
         <div className="space-y-6">
           {dashboard.data ? (
             <>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="rounded-xl border border-edge-soft bg-surface p-4 shadow-sm">
-                  <p className="text-xs uppercase tracking-wide text-content-faint">Total Findings</p>
-                  <p className="mt-2 text-3xl font-bold text-content">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 stagger">
+                <div className="card-cyber p-4">
+                  <p className="text-[10px] uppercase tracking-[2px] text-content-faint" style={{ fontFamily: '"Orbitron", sans-serif' }}>Total Findings</p>
+                  <p className="mt-2 text-3xl font-black" style={{ color: "#00ff41", fontFamily: '"Orbitron", sans-serif', textShadow: "0 0 12px rgba(0,255,65,0.3)" }}>
                     {dashboard.data.total_findings}
                   </p>
                 </div>
                 {(["critical", "high", "medium", "low"] as const).map((sev) => {
                   const n = dashboard.data!.by_severity[sev] ?? 0;
+                  const color = sev === "critical" ? "#ff003c" : sev === "high" ? "#ff6400" : sev === "medium" ? "#ffbe00" : "#00d4ff";
                   return (
-                    <div key={sev} className="rounded-xl border border-edge-soft bg-surface p-4 shadow-sm">
-                      <p className="text-xs uppercase tracking-wide text-content-faint">{sev}</p>
-                      <p className={`mt-2 text-3xl font-bold ${
-                        sev === "critical"
-                          ? "text-red-400"
-                          : sev === "high"
-                            ? "text-orange-400"
-                            : sev === "medium"
-                              ? "text-yellow-400"
-                              : "text-sky-400"
-                      }`}>
+                    <div key={sev} className="card-cyber p-4">
+                      <p className="text-[10px] uppercase tracking-[2px] text-content-faint" style={{ fontFamily: '"Orbitron", sans-serif' }}>{sev}</p>
+                      <p className="mt-2 text-3xl font-black" style={{ color, fontFamily: '"Orbitron", sans-serif', textShadow: `0 0 12px ${color}40` }}>
                         {n}
                       </p>
                     </div>
@@ -359,14 +360,14 @@ export default function ClientDetailPage() {
               </div>
 
               {dashboard.data.diff_counts && (
-                <div className="rounded-xl border border-edge-soft bg-surface p-4 shadow-sm">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-content-faint">
+                <div className="card-cyber p-4">
+                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[2px] text-content-faint" style={{ fontFamily: '"Orbitron", sans-serif' }}>
                     Diff vs previous scan
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {Object.entries(dashboard.data.diff_counts).map(([cat, n]) => (
-                      <div key={cat} className="rounded-lg border border-edge-soft bg-surface-alt px-4 py-2">
-                        <p className="text-xs uppercase text-content-faint">{cat}</p>
+                      <div key={cat} className="rounded-lg px-4 py-2" style={{ background: "rgba(0,255,65,0.05)", border: "1px solid rgba(0,255,65,0.1)" }}>
+                        <p className="text-[10px] uppercase text-content-faint">{cat}</p>
                         <p className="text-xl font-bold text-content">{n}</p>
                       </div>
                     ))}
@@ -375,8 +376,8 @@ export default function ClientDetailPage() {
               )}
 
               {Object.keys(dashboard.data.by_service).length > 0 && (
-                <div className="rounded-xl border border-edge-soft bg-surface p-4 shadow-sm">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-content-faint">
+                <div className="card-cyber p-4">
+                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[2px] text-content-faint" style={{ fontFamily: '"Orbitron", sans-serif' }}>
                     By Azure Service
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -386,9 +387,10 @@ export default function ClientDetailPage() {
                       .map(([svc, n]) => (
                         <span
                           key={svc}
-                          className="rounded-full border border-edge-soft bg-surface-alt px-2.5 py-1 text-xs text-content-secondary"
+                          className="rounded-full px-2.5 py-1 text-[10px] text-content-secondary"
+                          style={{ background: "rgba(0,212,255,0.06)", border: "1px solid rgba(0,212,255,0.15)" }}
                         >
-                          {svc} <span className="font-semibold text-content">{n}</span>
+                          {svc} <span className="font-semibold" style={{ color: "#00d4ff" }}>{n}</span>
                         </span>
                       ))}
                   </div>
@@ -396,7 +398,7 @@ export default function ClientDetailPage() {
               )}
             </>
           ) : (
-            <div className="flex items-center justify-center py-16 text-sm text-content-faint">
+            <div className="flex items-center justify-center py-16 text-xs text-content-faint">
               {dashboard.isLoading ? "Loading…" : "No scan data yet. Run a scan to see results."}
             </div>
           )}
@@ -407,42 +409,51 @@ export default function ClientDetailPage() {
       {tab === "credentials" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-content-muted">
+            <p className="text-xs text-content-muted">
               Secrets are encrypted server-side and never returned in API responses.
             </p>
-            <button
-              type="button"
-              onClick={() => setShowCredForm(!showCredForm)}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-500"
-            >
-              <Plus className="h-4 w-4" />
+            <button type="button" onClick={() => setShowCredForm(!showCredForm)} className="btn-cyber">
+              <Plus className="h-3.5 w-3.5" />
               Add Credential
             </button>
           </div>
 
           {/* Credential form */}
           {showCredForm && (
-            <div className="rounded-xl border border-edge-soft bg-surface p-5 shadow-sm">
+            <div className="card-cyber p-5">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-content">New Azure Credential</h3>
+                <h3
+                  className="text-[10px] font-semibold uppercase tracking-[2px]"
+                  style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+                >
+                  New Azure Credential
+                </h3>
                 <button type="button" onClick={() => setShowCredForm(false)}>
                   <X className="h-4 w-4 text-content-faint hover:text-content" />
                 </button>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { label: "Label", value: credLabel, onChange: (v: string) => setCredLabel(v), placeholder: "e.g. prod" },
+                ].map(({ label, value, onChange, placeholder }) => (
+                  <div key={label}>
+                    <label className="mb-1.5 block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>{label}</label>
+                    <input
+                      className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none transition-all"
+                      style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
+                      placeholder={placeholder}
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                    />
+                  </div>
+                ))}
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-content-muted">Label</label>
-                  <input
-                    className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
-                    placeholder="e.g. prod, staging"
-                    value={credLabel}
-                    onChange={(e) => setCredLabel(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-content-muted">Auth method</label>
+                  <label className="mb-1.5 block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>Auth Method</label>
                   <select
-                    className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
+                    className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none"
+                    style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
                     value={authMethod}
                     onChange={(e) => setAuthMethod(e.target.value as AuthMethod)}
                   >
@@ -453,36 +464,31 @@ export default function ClientDetailPage() {
                 </div>
                 {authMethod === "service_principal" && (
                   <>
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-content-muted">
-                        Directory (Tenant) ID
-                      </label>
-                      <input
-                        className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
-                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                        value={azureTenant}
-                        onChange={(e) => setAzureTenant(e.target.value)}
-                        autoComplete="off"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-content-muted">
-                        Application (Client) ID
-                      </label>
-                      <input
-                        className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
-                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                        value={azureClientId}
-                        onChange={(e) => setAzureClientId(e.target.value)}
-                        autoComplete="off"
-                      />
-                    </div>
+                    {[
+                      { label: "Directory (Tenant) ID", value: azureTenant, onChange: setAzureTenant, ph: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" },
+                      { label: "Application (Client) ID", value: azureClientId, onChange: setAzureClientId, ph: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" },
+                    ].map(({ label, value, onChange, ph }) => (
+                      <div key={label}>
+                        <label className="mb-1.5 block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>{label}</label>
+                        <input
+                          className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none"
+                          style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
+                          placeholder={ph}
+                          value={value}
+                          onChange={(e) => onChange(e.target.value)}
+                          autoComplete="off"
+                        />
+                      </div>
+                    ))}
                     <div className="sm:col-span-2">
-                      <label className="mb-1 block text-xs font-medium text-content-muted">
-                        Client Secret
-                      </label>
+                      <label className="mb-1.5 block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>Client Secret</label>
                       <input
-                        className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
+                        className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none"
+                        style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
                         placeholder="Client secret value"
                         type="password"
                         value={azureSecret}
@@ -493,14 +499,15 @@ export default function ClientDetailPage() {
                   </>
                 )}
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-content-muted">
+                  <label className="mb-1.5 block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>
                     Subscription IDs{" "}
-                    <span className="font-normal text-content-faint">
-                      (optional — comma-separated; leave blank for all accessible)
-                    </span>
+                    <span className="font-normal text-content-faint normal-case tracking-normal">(optional, comma-separated)</span>
                   </label>
                   <input
-                    className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
+                    className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none"
+                    style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
                     placeholder="sub-id-1, sub-id-2"
                     value={azureSubIds}
                     onChange={(e) => setAzureSubIds(e.target.value)}
@@ -509,20 +516,9 @@ export default function ClientDetailPage() {
                 </div>
               </div>
               <div className="mt-4 flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="rounded-lg px-4 py-2 text-sm text-content-muted hover:text-content"
-                  onClick={() => setShowCredForm(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-                  disabled={credSaveDisabled}
-                  onClick={() => addCred.mutate()}
-                >
-                  {addCred.isPending ? "Saving…" : "Save credential"}
+                <button type="button" className="btn-cyber-ghost" onClick={() => setShowCredForm(false)}>Cancel</button>
+                <button type="button" className="btn-cyber" disabled={credSaveDisabled} onClick={() => addCred.mutate()}>
+                  {addCred.isPending ? "Saving…" : "[ Save ]"}
                 </button>
               </div>
             </div>
@@ -530,14 +526,10 @@ export default function ClientDetailPage() {
 
           {/* Credentials list */}
           {creds.data?.length === 0 && !showCredForm && (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-edge py-12 text-center">
-              <Key className="mb-3 h-8 w-8 text-content-faint" />
-              <p className="text-sm text-content-muted">No credentials yet</p>
-              <button
-                type="button"
-                onClick={() => setShowCredForm(true)}
-                className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-              >
+            <div className="flex flex-col items-center justify-center rounded-xl py-12 text-center" style={{ border: "1px dashed rgba(0,255,65,0.15)" }}>
+              <Key className="mb-3 h-8 w-8" style={{ color: "rgba(0,255,65,0.3)" }} />
+              <p className="text-xs text-content-muted">No credentials configured</p>
+              <button type="button" onClick={() => setShowCredForm(true)} className="btn-cyber mt-4">
                 Add Credential
               </button>
             </div>
@@ -545,25 +537,24 @@ export default function ClientDetailPage() {
 
           <ul className="space-y-2">
             {creds.data?.map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-edge-soft bg-surface p-4 shadow-sm"
-              >
+              <li key={c.id} className="card-cyber flex items-center justify-between gap-3 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600/20">
-                    <Key className="h-4 w-4 text-blue-400" />
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-lg"
+                    style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.2)" }}
+                  >
+                    <Key className="h-4 w-4" style={{ color: "#00d4ff" }} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-content">{c.label}</p>
-                    <p className="text-xs text-content-faint">
-                      {AUTH_LABELS[c.auth_method as AuthMethod] ?? c.auth_method} ·{" "}
-                      <span className="font-mono">{c.id.slice(0, 8)}…</span>
+                    <p className="text-xs font-medium text-content">{c.label}</p>
+                    <p className="text-[10px] text-content-faint">
+                      {AUTH_LABELS[c.auth_method as AuthMethod] ?? c.auth_method} · <span style={{ fontFamily: '"JetBrains Mono", monospace' }}>{c.id.slice(0, 8)}…</span>
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 rounded-lg border border-red-800/50 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-950/40 disabled:opacity-50"
+                  className="btn-cyber-danger flex items-center gap-1.5 disabled:opacity-50"
                   disabled={deleteCred.isPending && deleteCredTarget?.id === c.id}
                   onClick={() => setDeleteCredTarget(c)}
                 >
@@ -580,120 +571,122 @@ export default function ClientDetailPage() {
       {tab === "scans" && (
         <div className="space-y-6">
           {/* Start scan form */}
-          <div className="rounded-xl border border-edge-soft bg-surface p-5 shadow-sm">
-            <h3 className="mb-4 text-sm font-semibold text-content">Start New Azure Audit</h3>
+          <div className="card-cyber p-5">
+            <h3
+              className="mb-4 text-[10px] font-semibold uppercase tracking-[2px]"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+            >
+              Launch New Azure Audit
+            </h3>
             {!creds.data?.length ? (
-              <div className="rounded-lg bg-surface-alt p-3 text-sm text-content-muted">
+              <div className="rounded-lg p-3 text-xs text-content-muted" style={{ background: "rgba(255,190,0,0.05)", border: "1px solid rgba(255,190,0,0.15)" }}>
                 No credentials configured.{" "}
-                <button
-                  type="button"
-                  className="text-blue-400 hover:underline"
-                  onClick={() => setTab("credentials")}
-                >
+                <button type="button" className="hover:underline" style={{ color: "#00d4ff" }} onClick={() => setTab("credentials")}>
                   Add a credential
                 </button>{" "}
                 first.
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-content-muted">Credential</label>
-                  <select
-                    className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
-                    value={credId}
-                    onChange={(e) => setCredId(e.target.value)}
-                  >
-                    <option value="">Select…</option>
-                    {creds.data?.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.label} ({AUTH_LABELS[c.auth_method as AuthMethod] ?? c.auth_method})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-content-muted">Scan label</label>
-                  <input
-                    className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
-                    placeholder="e.g. Initial scan"
-                    value={scanLabel}
-                    onChange={(e) => setScanLabel(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-content-muted">
-                    Compare to (optional)
-                  </label>
-                  <select
-                    className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
-                    value={prevScanId}
-                    onChange={(e) => setPrevScanId(e.target.value)}
-                  >
-                    <option value="">No baseline</option>
-                    {completedScans.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {(s.label || "Scan") + " · " + s.id.slice(0, 8)}…
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {[
+                  { label: "Credential", type: "select" as const },
+                  { label: "Scan Label", type: "input" as const },
+                  { label: "Compare To", type: "select-prev" as const },
+                ].map(({ label, type }) => (
+                  <div key={label}>
+                    <label className="mb-1.5 block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>{label}</label>
+                    {type === "input" ? (
+                      <input
+                        className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none"
+                        style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
+                        placeholder="e.g. Initial scan"
+                        value={scanLabel}
+                        onChange={(e) => setScanLabel(e.target.value)}
+                      />
+                    ) : type === "select" ? (
+                      <select
+                        className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none"
+                        style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                        value={credId}
+                        onChange={(e) => setCredId(e.target.value)}
+                      >
+                        <option value="">Select…</option>
+                        {creds.data?.map((c) => (
+                          <option key={c.id} value={c.id}>{c.label} ({AUTH_LABELS[c.auth_method as AuthMethod] ?? c.auth_method})</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <select
+                        className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none"
+                        style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                        value={prevScanId}
+                        onChange={(e) => setPrevScanId(e.target.value)}
+                      >
+                        <option value="">No baseline</option>
+                        {completedScans.map((s) => (
+                          <option key={s.id} value={s.id}>{(s.label || "Scan") + " · " + s.id.slice(0, 8)}…</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
             {!!creds.data?.length && (
               <div className="mt-4 flex justify-end">
                 <button
                   type="button"
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+                  className="btn-cyber"
                   disabled={startScan.isPending || !credId}
                   onClick={() => startScan.mutate()}
                 >
-                  <ScanLine className="h-4 w-4" />
-                  {startScan.isPending ? "Starting…" : "Start Azure Scan"}
+                  <ScanLine className="h-3.5 w-3.5" />
+                  {startScan.isPending ? "Starting…" : "[ Launch Scan ]"}
                 </button>
               </div>
             )}
           </div>
 
           {/* Scan history */}
-          <div className="rounded-xl border border-edge-soft bg-surface shadow-sm">
-            <div className="border-b border-edge-soft px-5 py-4">
-              <h3 className="text-sm font-semibold text-content-faint uppercase tracking-wide">
+          <div className="card-cyber overflow-hidden">
+            <div className="px-5 py-4" style={{ borderBottom: "1px solid rgba(0,255,65,0.08)" }}>
+              <h3
+                className="text-[10px] font-semibold uppercase tracking-[2px] text-content-faint"
+                style={{ fontFamily: '"Orbitron", sans-serif' }}
+              >
                 Scan History
               </h3>
             </div>
             {scans.isLoading && (
               <div className="flex justify-center py-8">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                <div className="h-5 w-5 animate-spin rounded-full" style={{ border: "2px solid rgba(0,255,65,0.2)", borderTopColor: "#00ff41" }} />
               </div>
             )}
             {scans.data?.length === 0 && !scans.isLoading && (
-              <p className="px-5 py-8 text-center text-sm text-content-faint">
-                No scans yet
-              </p>
+              <p className="px-5 py-8 text-center text-xs text-content-faint">No scans yet</p>
             )}
-            <ul className="divide-y divide-edge-soft">
+            <ul>
               {scans.data?.map((s) => (
                 <li key={s.id}>
                   <Link
                     to={`/scans/${s.id}`}
                     className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-surface-alt"
+                    style={{ borderBottom: "1px solid rgba(0,255,65,0.04)" }}
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-content">{s.label || "Scan"}</p>
-                      <p className="mt-0.5 font-mono text-xs text-content-faint">
+                      <p className="text-xs font-medium text-content">{s.label || "Scan"}</p>
+                      <p className="mt-0.5 text-[10px] text-content-faint">
                         {new Date(s.created_at).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 pl-4">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE[s.status] ?? "text-content-muted"}`}
-                      >
-                        {s.status}
-                      </span>
+                      <span className={STATUS_BADGE[s.status] ?? "badge"}>{s.status}</span>
                       {s.status === "running" && (
-                        <span className="text-xs text-content-faint">{s.progress_pct}%</span>
+                        <span className="text-[10px] text-content-faint">{s.progress_pct}%</span>
                       )}
-                      <ChevronRight className="h-4 w-4 text-content-faint" />
+                      <ChevronRight className="h-4 w-4" style={{ color: "rgba(0,255,65,0.3)" }} />
                     </div>
                   </Link>
                 </li>
@@ -706,35 +699,22 @@ export default function ClientDetailPage() {
       {/* Delete credential modal */}
       {deleteCredTarget && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
           role="dialog"
           onClick={() => setDeleteCredTarget(null)}
         >
-          <div
-            className="w-full max-w-md rounded-xl border border-edge bg-surface p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-semibold text-content">Remove credential?</h2>
-            <p className="mt-2 text-sm text-content-muted">
-              This will permanently remove{" "}
-              <span className="font-semibold text-content">{deleteCredTarget.label}</span>. Existing
-              scans using this credential will remain.
+          <div className="card-cyber w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-3 text-[10px] font-semibold uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#ff003c" }}>
+              Remove Credential?
+            </h2>
+            <p className="text-sm text-content-secondary">
+              This will permanently remove <span className="font-semibold text-content">{deleteCredTarget.label}</span>. Existing scans will remain.
             </p>
             <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-lg px-4 py-2 text-sm text-content-muted hover:text-content"
-                onClick={() => setDeleteCredTarget(null)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
-                disabled={deleteCred.isPending}
-                onClick={() => deleteCred.mutate(deleteCredTarget.id)}
-              >
-                {deleteCred.isPending ? "Removing…" : "Remove"}
+              <button type="button" className="btn-cyber-ghost" onClick={() => setDeleteCredTarget(null)}>Cancel</button>
+              <button type="button" className="btn-cyber-danger" disabled={deleteCred.isPending} onClick={() => deleteCred.mutate(deleteCredTarget.id)}>
+                {deleteCred.isPending ? "Removing…" : "[ Remove ]"}
               </button>
             </div>
           </div>
@@ -744,53 +724,42 @@ export default function ClientDetailPage() {
       {/* Edit client modal */}
       {editClientOpen && client.data && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
           role="dialog"
           onClick={() => setEditClientOpen(false)}
         >
-          <div
-            className="w-full max-w-md rounded-xl border border-edge bg-surface p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-semibold text-content">Edit client</h2>
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="text-xs font-medium text-content-muted">Name</label>
-                <input
-                  className="mt-1 w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-content-muted">Description</label>
-                <input
-                  className="mt-1 w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                />
-              </div>
+          <div className="card-cyber w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-4 text-[10px] font-semibold uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>
+              Edit Client
+            </h2>
+            <div className="space-y-4">
+              {[
+                { label: "Name", value: editName, onChange: setEditName },
+                { label: "Description", value: editDesc, onChange: setEditDesc },
+              ].map(({ label, value, onChange }) => (
+                <div key={label}>
+                  <label className="mb-1.5 block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>{label}</label>
+                  <input
+                    className="w-full rounded-lg px-3 py-2 text-xs text-content outline-none"
+                    style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                  />
+                </div>
+              ))}
             </div>
             <div className="mt-6 flex justify-end gap-2">
+              <button type="button" className="btn-cyber-ghost" onClick={() => setEditClientOpen(false)}>Cancel</button>
               <button
                 type="button"
-                className="rounded-lg px-4 py-2 text-sm text-content-muted hover:text-content"
-                onClick={() => setEditClientOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                className="btn-cyber"
                 disabled={updateClient.isPending || !editName.trim()}
-                onClick={() =>
-                  updateClient.mutate({
-                    name: editName.trim(),
-                    description: editDesc.trim() || undefined,
-                  })
-                }
+                onClick={() => updateClient.mutate({ name: editName.trim(), description: editDesc.trim() || undefined })}
               >
-                {updateClient.isPending ? "Saving…" : "Save"}
+                {updateClient.isPending ? "Saving…" : "[ Save ]"}
               </button>
             </div>
           </div>
@@ -800,45 +769,27 @@ export default function ClientDetailPage() {
       {/* Delete client modal */}
       {deleteClientOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
           role="dialog"
           onClick={() => setDeleteClientOpen(false)}
         >
-          <div
-            className="w-full max-w-md rounded-xl border border-edge bg-surface p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-semibold text-content">Delete this client?</h2>
-            <p className="mt-2 text-sm text-content-muted">
-              All credentials and scans for{" "}
-              <span className="font-semibold text-content">{client.data?.name}</span> will be
-              permanently removed.
+          <div className="card-cyber w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#ff003c" }}>
+              Delete Client?
+            </h2>
+            <p className="mt-3 text-sm text-content-secondary">
+              All credentials and scans for <span className="font-semibold text-content">{client.data?.name}</span> will be permanently removed.
             </p>
             <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-lg px-4 py-2 text-sm text-content-muted hover:text-content"
-                onClick={() => setDeleteClientOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
-                disabled={deleteClient.isPending}
-                onClick={() => deleteClient.mutate()}
-              >
-                {deleteClient.isPending ? "Deleting…" : "Delete"}
+              <button type="button" className="btn-cyber-ghost" onClick={() => setDeleteClientOpen(false)}>Cancel</button>
+              <button type="button" className="btn-cyber-danger" disabled={deleteClient.isPending} onClick={() => deleteClient.mutate()}>
+                {deleteClient.isPending ? "Deleting…" : "[ Delete ]"}
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Hidden severity badge classes to keep Tailwind from purging them */}
-      <span className="hidden">
-        {Object.values(SEV_BADGE).join(" ")} {Object.values(STATUS_BADGE).join(" ")}
-      </span>
     </div>
   );
 }

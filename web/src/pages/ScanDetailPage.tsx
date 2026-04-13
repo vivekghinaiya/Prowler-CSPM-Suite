@@ -47,11 +47,11 @@ type PaginatedFindings = {
 };
 
 const SEV_BADGE: Record<string, string> = {
-  critical: "bg-red-950/60 text-red-300 border-red-700/50",
-  high: "bg-orange-950/50 text-orange-300 border-orange-700/50",
-  medium: "bg-yellow-950/40 text-yellow-300 border-yellow-700/40",
-  low: "bg-sky-950/40 text-sky-300 border-sky-700/40",
-  informational: "bg-slate-800/60 text-slate-300 border-slate-600/50",
+  critical: "badge badge-critical",
+  high: "badge badge-high",
+  medium: "badge badge-medium",
+  low: "badge badge-low",
+  informational: "badge badge-info",
 };
 
 const PAGE_SIZE = 50;
@@ -109,9 +109,9 @@ type PaginatedGroupedFindings = {
 };
 
 const DIFF_BADGE: Record<string, string> = {
-  new: "bg-emerald-950/50 text-emerald-300 border-emerald-700/50",
-  open: "bg-amber-950/50 text-amber-300 border-amber-700/50",
-  closed: "bg-surface-alt text-content-muted border-edge",
+  new: "badge badge-success",
+  open: "badge badge-pending",
+  closed: "badge badge-cancelled",
 };
 
 export default function ScanDetailPage() {
@@ -313,75 +313,70 @@ export default function ScanDetailPage() {
   const stageLabel = wsStage;
 
   const STATUS_BADGE: Record<string, string> = {
-    completed: "bg-emerald-950/60 text-emerald-300 border-emerald-700/50",
-    running: "bg-blue-950/60 text-blue-300 border-blue-700/50",
-    pending: "bg-yellow-950/40 text-yellow-300 border-yellow-700/40",
-    failed: "bg-red-950/60 text-red-300 border-red-700/50",
-    cancelled: "bg-slate-800/60 text-slate-300 border-slate-600/50",
+    completed: "badge badge-completed",
+    running: "badge badge-running",
+    pending: "badge badge-pending",
+    failed: "badge badge-failed",
+    cancelled: "badge badge-cancelled",
   };
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl px-6 py-8">
       {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-content-faint">
-        <Link to="/clients" className="hover:text-content transition-colors">
+      <div className="mb-6 flex items-center gap-2 pt-2 text-xs text-content-faint md:pt-0">
+        <Link to="/clients" className="transition-colors hover:text-content" style={{ color: "rgba(0,255,65,0.5)" }}>
           Clients
         </Link>
         <ChevronRight className="h-3.5 w-3.5" />
         {scan.data?.client_id && (
           <>
-            <Link
-              to={`/clients/${scan.data.client_id}`}
-              className="hover:text-content transition-colors"
-            >
+            <Link to={`/clients/${scan.data.client_id}`} className="transition-colors hover:text-content" style={{ color: "rgba(0,255,65,0.5)" }}>
               Client
             </Link>
             <ChevronRight className="h-3.5 w-3.5" />
           </>
         )}
-        <span className="text-content-muted">{scan.data?.label || "Scan"}</span>
+        <span style={{ color: "#7a7a8a" }}>{scan.data?.label || "Scan"}</span>
       </div>
 
       {scan.data && (
         <header className="mb-6 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-content">
+              <h1
+                className="text-xl font-black uppercase tracking-widest"
+                style={{ fontFamily: '"Orbitron", sans-serif', color: "#00ff41", textShadow: "0 0 16px rgba(0,255,65,0.3)" }}
+              >
                 {scan.data.label || "Scan"}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE[scan.data.status] ?? "text-content-muted border-edge"}`}
-                >
+                <span className={STATUS_BADGE[scan.data.status] ?? "badge"}>
                   {scan.data.status}
                 </span>
                 {(scan.data.status === "running" || scan.data.status === "pending") && (
                   <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-32 overflow-hidden rounded-full bg-surface-alt">
-                      <div
-                        className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="progress-track w-32">
+                      <div className="progress-fill" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="font-mono text-xs text-content-faint">{pct}%</span>
+                    <span className="text-xs text-content-faint">{pct}%</span>
                   </div>
                 )}
                 {stageLabel && (
-                  <span className="rounded-full border border-edge px-2 py-0.5 font-mono text-xs text-content-secondary">
+                  <span
+                    className="rounded-full px-2 py-0.5 text-xs"
+                    style={{ border: "1px solid rgba(0,255,65,0.15)", color: "#7a7a8a", fontFamily: '"JetBrains Mono", monospace' }}
+                  >
                     {stageLabel.replace(/_/g, " ")}
-                    {wsChecks && stageLabel === "running_prowler"
-                      ? ` (${wsChecks.done}/${wsChecks.total})`
-                      : ""}
+                    {wsChecks && stageLabel === "running_prowler" ? ` (${wsChecks.done}/${wsChecks.total})` : ""}
                   </span>
                 )}
-                {scan.data.status === "completed" &&
-                  typeof scan.data.findings_count === "number" && (
-                    <span className="text-xs text-content-faint">
-                      {scan.data.findings_count.toLocaleString()} findings
-                    </span>
-                  )}
+                {scan.data.status === "completed" && typeof scan.data.findings_count === "number" && (
+                  <span className="text-xs text-content-faint">
+                    {scan.data.findings_count.toLocaleString()} findings
+                  </span>
+                )}
                 {scan.data.error_message && (
-                  <span className="text-xs text-red-400">{scan.data.error_message}</span>
+                  <span className="text-xs" style={{ color: "#ff003c" }}>{scan.data.error_message}</span>
                 )}
               </div>
             </div>
@@ -389,33 +384,28 @@ export default function ScanDetailPage() {
             {/* Action buttons */}
             <div className="flex flex-wrap items-center gap-2">
               <input
-                className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
+                className="rounded-lg px-3 py-1.5 text-xs text-content outline-none"
+                style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.4)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
                 value={labelEdit}
                 onChange={(e) => setLabelEdit(e.target.value)}
                 placeholder="Edit scan label"
               />
               <button
                 type="button"
-                className="rounded-lg border border-edge bg-surface px-3 py-1.5 text-sm text-content-muted transition-colors hover:bg-surface-alt hover:text-content"
-                onClick={() =>
-                  patchLabel.mutate(labelEdit, {
-                    onSuccess: () => toast.success("Label saved"),
-                    onError: (e: Error) => toast.error(e.message),
-                  })
-                }
+                className="btn-cyber-ghost"
+                onClick={() => patchLabel.mutate(labelEdit, { onSuccess: () => toast.success("Label saved"), onError: (e: Error) => toast.error(e.message) })}
               >
                 Save
               </button>
               {(scan.data.status === "pending" || scan.data.status === "running") && (
                 <button
                   type="button"
-                  className="rounded-lg border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-sm text-amber-200 transition-colors hover:bg-amber-950/70 disabled:opacity-50"
+                  className="btn-cyber"
+                  style={{ borderColor: "rgba(255,190,0,0.35)", background: "rgba(255,190,0,0.07)", color: "#ffbe00" }}
                   disabled={cancelScan.isPending}
-                  onClick={() =>
-                    cancelScan.mutate(undefined, {
-                      onError: (e: Error) => toast.error(e.message),
-                    })
-                  }
+                  onClick={() => cancelScan.mutate(undefined, { onError: (e: Error) => toast.error(e.message) })}
                 >
                   Cancel scan
                 </button>
@@ -423,23 +413,17 @@ export default function ScanDetailPage() {
               {scan.data.status === "completed" && (
                 <button
                   type="button"
-                  className="rounded-lg border border-edge bg-surface px-3 py-1.5 text-sm text-content-muted transition-colors hover:bg-surface-alt hover:text-content disabled:opacity-50"
+                  className="btn-cyber-ghost disabled:opacity-50"
                   disabled={reparseFindings.isPending}
-                  onClick={() =>
-                    reparseFindings.mutate(undefined, {
-                      onSuccess: () => toast.success("Re-parse queued"),
-                      onError: (e: Error) => toast.error(e.message),
-                    })
-                  }
+                  onClick={() => reparseFindings.mutate(undefined, { onSuccess: () => toast.success("Re-parse queued"), onError: (e: Error) => toast.error(e.message) })}
                 >
                   {reparseFindings.isPending ? "Re-parsing…" : "Re-parse"}
                 </button>
               )}
-              <a
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-500"
-                href={`${base || ""}/api/v1/scans/${scanId}/export.xlsx`}
-                onClick={(e) => {
-                  e.preventDefault();
+              <button
+                type="button"
+                className="btn-cyber-secondary"
+                onClick={() => {
                   const url = `${base || ""}/api/v1/scans/${scanId}/export.xlsx`;
                   fetch(url, { headers: { Authorization: `Bearer ${getToken()}` } })
                     .then((r) => r.blob())
@@ -454,20 +438,22 @@ export default function ScanDetailPage() {
                 }}
               >
                 Export Excel
-              </a>
+              </button>
               {scan.data.status === "completed" && (
                 <>
                   <button
                     type="button"
                     onClick={() => setShowSummaryModal(true)}
-                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:from-purple-500 hover:to-blue-500"
+                    className="btn-cyber"
+                    style={{ borderColor: "rgba(168,85,247,0.4)", background: "rgba(168,85,247,0.1)", color: "#c084fc" }}
                   >
                     <FileText className="h-3.5 w-3.5" /> AI Summary
                   </button>
                   <button
                     type="button"
                     onClick={() => setTab("ai_triage")}
-                    className="flex items-center gap-1.5 rounded-lg border border-purple-700/60 bg-purple-950/30 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-950/60"
+                    className="btn-cyber"
+                    style={{ borderColor: "rgba(168,85,247,0.35)", background: "rgba(168,85,247,0.07)", color: "#c084fc" }}
                   >
                     <Sparkles className="h-3.5 w-3.5" /> AI Triage
                   </button>
@@ -479,28 +465,32 @@ export default function ScanDetailPage() {
       )}
 
       {/* Tab navigation */}
-      <div className="mb-6 flex border-b border-edge-soft">
-        {(["findings", "issues", "smart_groups", "diff", "ai_triage", "logs"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-              tab === t
-                ? "border-blue-500 text-blue-400"
-                : "border-transparent text-content-muted hover:border-edge hover:text-content"
-            }`}
-          >
-            {t === "smart_groups" ? "Smart Groups ✨" : t === "ai_triage" ? "AI Triage ✨" : t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
+      <div className="mb-6 flex overflow-x-auto border-b" style={{ borderColor: "rgba(0,255,65,0.1)" }}>
+        {(["findings", "issues", "smart_groups", "diff", "ai_triage", "logs"] as const).map((t) => {
+          const active = tab === t;
+          const label = t === "smart_groups" ? "Smart Groups" : t === "ai_triage" ? "AI Triage" : t.charAt(0).toUpperCase() + t.slice(1);
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className="whitespace-nowrap border-b-2 px-4 py-3 text-xs font-medium transition-colors"
+              style={active
+                ? { borderColor: "#00ff41", color: "#00ff41", fontFamily: '"Orbitron", sans-serif', letterSpacing: "1px" }
+                : { borderColor: "transparent", color: "#4a4a5a", fontFamily: '"Orbitron", sans-serif', letterSpacing: "1px" }
+              }
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {tab === "findings" && (
         <div>
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <select
-              className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content"
+              className="rounded-lg px-3 py-1.5 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
               value={fSeverity}
               onChange={(e) => { setFSeverity(e.target.value); setPage(0); }}
             >
@@ -511,7 +501,7 @@ export default function ScanDetailPage() {
               <option value="low">Low</option>
             </select>
             <select
-              className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content"
+              className="rounded-lg px-3 py-1.5 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
               value={fStatus}
               onChange={(e) => { setFStatus(e.target.value); setPage(0); }}
             >
@@ -521,7 +511,7 @@ export default function ScanDetailPage() {
               <option value="closed">Closed</option>
             </select>
             <select
-              className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content"
+              className="rounded-lg px-3 py-1.5 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
               value={fTriage}
               onChange={(e) => { setFTriage(e.target.value); setPage(0); }}
             >
@@ -532,7 +522,7 @@ export default function ScanDetailPage() {
               <option value="not_applicable">N/A</option>
             </select>
             <select
-              className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content"
+              className="rounded-lg px-3 py-1.5 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
               value={fService}
               onChange={(e) => { setFService(e.target.value); setPage(0); }}
             >
@@ -544,14 +534,14 @@ export default function ScanDetailPage() {
             <input
               type="text"
               placeholder="Search findings..."
-              className="w-40 rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content placeholder-content-faint sm:w-48"
+              className="w-40 rounded-lg px-3 py-1.5 text-xs text-content outline-none placeholder-content-faint sm:w-48" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
               value={fSearch}
               onChange={(e) => { setFSearch(e.target.value); setPage(0); }}
             />
             {(fSeverity || fStatus || fTriage || fService || fSearch) && (
               <button
                 type="button"
-                className="rounded-lg border border-edge px-3 py-1.5 text-sm text-content-muted hover:text-content"
+                className="btn-cyber-ghost"
                 onClick={() => { setFSeverity(""); setFStatus(""); setFTriage(""); setFService(""); setFSearch(""); setPage(0); }}
               >
                 Clear filters
@@ -565,9 +555,9 @@ export default function ScanDetailPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
+            <table className="table-cyber w-full">
               <thead>
-                <tr className="border-b border-edge-soft text-content-muted">
+                <tr>
                   <th className="w-6 py-2" />
                   <th className="py-2 pr-3">Severity</th>
                   <th className="py-2 pr-3">Status</th>
@@ -599,7 +589,7 @@ export default function ScanDetailPage() {
                         <td className="py-2 pr-3 text-content-secondary">{f.status}</td>
                         <td className="py-2 pr-3" onClick={(e) => e.stopPropagation()}>
                           <select
-                            className="rounded border border-edge bg-field px-2 py-1 text-xs text-content"
+                            className="rounded px-2 py-1 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)" }}
                             value={f.triage ?? ""}
                             onChange={(e) => {
                               const v = e.target.value;
@@ -665,7 +655,7 @@ export default function ScanDetailPage() {
             <div className="mt-4 flex items-center justify-between text-sm">
               <button
                 type="button"
-                className="rounded-lg border border-edge px-3 py-1.5 text-content-secondary hover:bg-surface-alt disabled:opacity-40"
+                className="btn-cyber-ghost disabled:opacity-40"
                 disabled={page === 0}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
               >
@@ -676,7 +666,7 @@ export default function ScanDetailPage() {
               </span>
               <button
                 type="button"
-                className="rounded-lg border border-edge px-3 py-1.5 text-content-secondary hover:bg-surface-alt disabled:opacity-40"
+                className="btn-cyber-ghost disabled:opacity-40"
                 disabled={(page + 1) * PAGE_SIZE >= findings.data.total}
                 onClick={() => setPage((p) => p + 1)}
               >
@@ -698,7 +688,7 @@ export default function ScanDetailPage() {
         <div className="mt-4">
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <select
-              className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content"
+              className="rounded-lg px-3 py-1.5 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
               value={issueSeverity}
               onChange={(e) => { setIssueSeverity(e.target.value); setIssuesPage(0); }}
             >
@@ -709,7 +699,7 @@ export default function ScanDetailPage() {
               <option value="low">Low</option>
             </select>
             <select
-              className="rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content"
+              className="rounded-lg px-3 py-1.5 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
               value={issueService}
               onChange={(e) => { setIssueService(e.target.value); setIssuesPage(0); }}
             >
@@ -721,14 +711,14 @@ export default function ScanDetailPage() {
             <input
               type="text"
               placeholder="Search issues..."
-              className="w-40 rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content placeholder-content-faint sm:w-48"
+              className="w-40 rounded-lg px-3 py-1.5 text-xs text-content outline-none placeholder-content-faint sm:w-48" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
               value={issueSearch}
               onChange={(e) => { setIssueSearch(e.target.value); setIssuesPage(0); }}
             />
             {(issueSeverity || issueService || issueSearch) && (
               <button
                 type="button"
-                className="rounded-lg border border-edge px-3 py-1.5 text-sm text-content-muted hover:text-content"
+                className="btn-cyber-ghost"
                 onClick={() => { setIssueSeverity(""); setIssueService(""); setIssueSearch(""); setIssuesPage(0); }}
               >
                 Clear filters
@@ -742,9 +732,9 @@ export default function ScanDetailPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
+            <table className="table-cyber w-full">
               <thead>
-                <tr className="border-b border-edge-soft text-content-muted">
+                <tr>
                   <th className="w-6 py-2" />
                   <th className="py-2 pr-3">Severity</th>
                   <th className="py-2 pr-3">Service</th>
@@ -806,9 +796,9 @@ export default function ScanDetailPage() {
                                 </dd>
                               </dl>
                             </div>
-                            <table className="w-full border-collapse text-left text-xs">
+                            <table className="table-cyber w-full">
                               <thead>
-                                <tr className="border-b border-edge-soft text-content-faint">
+                                <tr>
                                   <th className="py-1.5 pr-3">Resource</th>
                                   <th className="py-1.5 pr-3">Region</th>
                                   <th className="py-1.5 pr-3">Status</th>
@@ -823,7 +813,7 @@ export default function ScanDetailPage() {
                                     <td className="py-1.5 pr-3 text-content-muted">{r.status}</td>
                                     <td className="py-1.5 pr-3" onClick={(e) => e.stopPropagation()}>
                                       <select
-                                        className="rounded border border-edge bg-field px-2 py-0.5 text-xs text-content"
+                                        className="rounded px-2 py-0.5 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)" }}
                                         value={r.triage ?? ""}
                                         onChange={(e) => {
                                           const v = e.target.value;
@@ -855,7 +845,7 @@ export default function ScanDetailPage() {
             <div className="mt-4 flex items-center justify-between text-sm">
               <button
                 type="button"
-                className="rounded-lg border border-edge px-3 py-1.5 text-content-secondary hover:bg-surface-alt disabled:opacity-40"
+                className="btn-cyber-ghost disabled:opacity-40"
                 disabled={issuesPage === 0}
                 onClick={() => setIssuesPage((p) => Math.max(0, p - 1))}
               >
@@ -866,7 +856,7 @@ export default function ScanDetailPage() {
               </span>
               <button
                 type="button"
-                className="rounded-lg border border-edge px-3 py-1.5 text-content-secondary hover:bg-surface-alt disabled:opacity-40"
+                className="btn-cyber-ghost disabled:opacity-40"
                 disabled={(issuesPage + 1) * PAGE_SIZE >= groupedFindings.data.total_groups}
                 onClick={() => setIssuesPage((p) => p + 1)}
               >
@@ -912,12 +902,12 @@ export default function ScanDetailPage() {
                 <input
                   type="text"
                   placeholder="Search diff..."
-                  className="w-40 rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content placeholder-content-faint sm:w-48"
+                  className="w-40 rounded-lg px-3 py-1.5 text-xs text-content outline-none placeholder-content-faint sm:w-48" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
                   value={diffSearch}
                   onChange={(e) => { setDiffSearch(e.target.value); setDiffPage(0); }}
                 />
                 <select
-                  className="ml-auto rounded-lg border border-edge bg-field px-3 py-1.5 text-sm text-content"
+                  className="ml-auto rounded-lg px-3 py-1.5 text-xs text-content outline-none" style={{ background: "rgba(20,20,30,0.8)", border: "1px solid rgba(0,255,65,0.15)", fontFamily: '"JetBrains Mono", monospace' }}
                   value={diffTriageFilter}
                   onChange={(e) => { setDiffTriageFilter(e.target.value); setDiffPage(0); setDiffCatFilter(null); }}
                 >
@@ -1036,7 +1026,7 @@ export default function ScanDetailPage() {
                   <div className="mt-4 flex items-center justify-between text-sm">
                     <button
                       type="button"
-                      className="rounded-lg border border-edge px-3 py-1.5 text-content-secondary hover:bg-surface-alt disabled:opacity-40"
+                      className="btn-cyber-ghost disabled:opacity-40"
                       disabled={diffPage === 0}
                       onClick={() => setDiffPage((p) => Math.max(0, p - 1))}
                     >
@@ -1047,7 +1037,7 @@ export default function ScanDetailPage() {
                     </span>
                     <button
                       type="button"
-                      className="rounded-lg border border-edge px-3 py-1.5 text-content-secondary hover:bg-surface-alt disabled:opacity-40"
+                      className="btn-cyber-ghost disabled:opacity-40"
                       disabled={diffPage + 1 >= totalPages}
                       onClick={() => setDiffPage((p) => p + 1)}
                     >
@@ -1071,12 +1061,22 @@ export default function ScanDetailPage() {
 
       {tab === "logs" && (
         <div className="mt-4">
-          {scanLogs.isError && <p className="text-sm text-red-600 dark:text-red-400">Could not load logs.</p>}
-          <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap break-all rounded-lg border border-edge-soft bg-field p-3 font-mono text-xs text-content-secondary">
-            {scanLogs.data?.logs || (scan.data?.status === "pending" || scan.data?.status === "running" ? "…" : "")}
-          </pre>
+          {scanLogs.isError && <p className="text-xs" style={{ color: "#ff003c" }}>Could not load logs.</p>}
+          <div className="terminal-wrap">
+            <div className="terminal-titlebar">
+              <span className="terminal-dot" style={{ background: "#ff003c" }} />
+              <span className="terminal-dot" style={{ background: "#ffbe00" }} />
+              <span className="terminal-dot" style={{ background: "#00ff41" }} />
+              <span className="ml-3 text-[10px]" style={{ color: "rgba(0,255,65,0.5)", fontFamily: '"Orbitron", sans-serif', letterSpacing: "1px" }}>
+                SCAN LOG
+              </span>
+            </div>
+            <pre className="terminal-body">
+              {scanLogs.data?.logs || (scan.data?.status === "pending" || scan.data?.status === "running" ? "Waiting for log output…" : "No logs available.")}
+            </pre>
+          </div>
           {(scan.data?.status === "pending" || scan.data?.status === "running") && (
-            <p className="mt-2 text-xs text-content-faint">Logs refresh every 2s while the scan is active.</p>
+            <p className="mt-2 text-[10px] text-content-faint">Streaming · refreshes every 2s</p>
           )}
         </div>
       )}

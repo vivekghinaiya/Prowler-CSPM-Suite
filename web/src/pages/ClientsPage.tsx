@@ -12,6 +12,14 @@ type Client = {
   created_at: string;
 };
 
+const cyberInput =
+  "w-full rounded-lg px-3 py-2.5 text-xs text-content outline-none transition-all placeholder-content-faint";
+const cyberInputStyle = {
+  background: "rgba(20,20,30,0.8)",
+  border: "1px solid rgba(0,255,65,0.15)",
+  fontFamily: '"JetBrains Mono", monospace',
+};
+
 export default function ClientsPage() {
   const qc = useQueryClient();
   const nav = useNavigate();
@@ -73,33 +81,39 @@ export default function ClientsPage() {
   return (
     <div className="mx-auto max-w-screen-lg px-6 py-8">
       {/* Header */}
-      <header className="mb-8 flex items-center justify-between gap-4">
+      <header className="mb-8 flex items-center justify-between gap-4 pt-2 md:pt-0">
         <div>
-          <h1 className="text-2xl font-bold text-content">Clients</h1>
-          <p className="mt-1 text-sm text-content-muted">
-            Each client maps to an Azure tenant with its own credentials and scans.
+          <h1
+            className="text-xl font-black uppercase tracking-widest"
+            style={{ fontFamily: '"Orbitron", sans-serif', color: "#00ff41", textShadow: "0 0 16px rgba(0,255,65,0.3)" }}
+          >
+            Clients
+          </h1>
+          <p className="mt-1 text-xs text-content-muted">
+            Azure tenant configurations · Credentials &amp; scans per client
           </p>
         </div>
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500"
+          className="btn-cyber"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
           New Client
         </button>
       </header>
 
-      {/* Create form (collapsible) */}
+      {/* Create form */}
       {showForm && (
-        <div className="mb-6 rounded-xl border border-edge-soft bg-surface p-5 shadow-sm">
+        <div className="card-cyber mb-6 p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-content">New Client</h2>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="text-content-faint hover:text-content"
+            <h2
+              className="text-[10px] font-semibold uppercase tracking-[2px]"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
             >
+              New Client
+            </h2>
+            <button type="button" onClick={() => setShowForm(false)} className="text-content-faint hover:text-content">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -111,97 +125,105 @@ export default function ClientsPage() {
               create.mutate({ name: name.trim(), description: desc.trim() || undefined });
             }}
           >
-            <div className="flex-1 space-y-1">
-              <label className="text-xs font-medium text-content-muted">Name *</label>
+            <div className="flex-1 space-y-1.5">
+              <label className="block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>
+                Name *
+              </label>
               <input
-                className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content placeholder-content-faint outline-none ring-blue-500/40 focus:border-blue-500/60 focus:ring-2"
+                className={cyberInput}
+                style={cyberInputStyle}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Acme Corp"
                 autoFocus
               />
             </div>
-            <div className="flex-1 space-y-1">
-              <label className="text-xs font-medium text-content-muted">Description</label>
+            <div className="flex-1 space-y-1.5">
+              <label className="block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>
+                Description
+              </label>
               <input
-                className="w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content placeholder-content-faint outline-none ring-blue-500/40 focus:border-blue-500/60 focus:ring-2"
+                className={cyberInput}
+                style={cyberInputStyle}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
                 placeholder="Optional"
               />
             </div>
-            <button
-              type="submit"
-              disabled={create.isPending || !name.trim()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
-            >
-              {create.isPending ? "Creating…" : "Create"}
+            <button type="submit" disabled={create.isPending || !name.trim()} className="btn-cyber shrink-0">
+              {create.isPending ? "Creating…" : "[ Create ]"}
             </button>
           </form>
         </div>
       )}
 
-      {/* Client list */}
+      {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center py-16">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+          <div
+            className="h-8 w-8 animate-spin rounded-full"
+            style={{ border: "2px solid rgba(0,255,65,0.2)", borderTopColor: "#00ff41" }}
+          />
         </div>
       )}
 
+      {/* Empty state */}
       {!isLoading && data?.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-edge py-16 text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-alt">
-            <Plus className="h-6 w-6 text-content-faint" />
-          </div>
-          <p className="text-sm font-medium text-content-muted">No clients yet</p>
-          <p className="mt-1 text-xs text-content-faint">Create your first client to get started</p>
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
-            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+        <div
+          className="flex flex-col items-center justify-center rounded-xl py-16 text-center"
+          style={{ border: "1px dashed rgba(0,255,65,0.15)" }}
+        >
+          <div
+            className="mb-3 flex h-12 w-12 items-center justify-center rounded-full"
+            style={{ background: "rgba(0,255,65,0.06)", border: "1px solid rgba(0,255,65,0.15)" }}
           >
+            <Plus className="h-6 w-6" style={{ color: "#00ff41" }} />
+          </div>
+          <p className="text-xs font-medium text-content-muted">No clients configured</p>
+          <p className="mt-1 text-[10px] text-content-faint">Add your first Azure tenant to get started</p>
+          <button type="button" onClick={() => setShowForm(true)} className="btn-cyber mt-4">
             New Client
           </button>
         </div>
       )}
 
-      <ul className="space-y-3">
+      {/* Client list */}
+      <ul className="space-y-3 stagger">
         {data?.map((c) => (
           <li
             key={c.id}
             onClick={() => nav(`/clients/${c.id}`)}
-            className="group flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-edge-soft bg-surface p-4 shadow-sm transition-all duration-150 hover:border-blue-500/40 hover:bg-surface-alt hover:shadow-md"
+            className="card-cyber group flex cursor-pointer items-center justify-between gap-4 p-4 transition-all duration-150"
           >
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-content">{c.name}</span>
-              </div>
+              <p className="text-sm font-semibold text-content">{c.name}</p>
               {c.description && (
-                <p className="mt-0.5 truncate text-sm text-content-muted">{c.description}</p>
+                <p className="mt-0.5 truncate text-xs text-content-muted">{c.description}</p>
               )}
-              <p className="mt-1 text-xs text-content-faint">
+              <p className="mt-1 text-[10px] text-content-faint">
                 Created {new Date(c.created_at).toLocaleDateString()}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                className="rounded-lg border border-edge px-3 py-1.5 text-xs text-content-muted opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface hover:text-content"
+                className="btn-cyber-ghost rounded-lg border px-3 py-1.5 text-[10px] opacity-0 transition-opacity group-hover:opacity-100"
                 onClick={(e) => openEdit(e, c)}
               >
                 Edit
               </button>
               <button
                 type="button"
-                className="rounded-lg border border-red-800/50 px-3 py-1.5 text-xs text-red-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-950/40"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteTarget(c);
-                }}
+                className="btn-cyber-danger rounded-lg border px-3 py-1.5 text-[10px] opacity-0 transition-opacity group-hover:opacity-100"
+                onClick={(e) => { e.stopPropagation(); setDeleteTarget(c); }}
               >
                 Delete
               </button>
-              <ChevronRight className="h-4 w-4 text-content-faint transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight className="h-4 w-4 text-content-faint transition-transform group-hover:translate-x-0.5" style={{ color: "rgba(0,255,65,0.4)" }} />
             </div>
           </li>
         ))}
@@ -210,53 +232,60 @@ export default function ClientsPage() {
       {/* Edit modal */}
       {editing && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
           role="dialog"
           onClick={() => setEditing(null)}
         >
           <div
-            className="w-full max-w-md rounded-xl border border-edge bg-surface p-6 shadow-2xl"
+            className="card-cyber w-full max-w-md p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold text-content">Edit client</h2>
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="text-xs font-medium text-content-muted">Name</label>
+            <h2
+              className="mb-4 text-[10px] font-semibold uppercase tracking-[2px]"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+            >
+              Edit Client
+            </h2>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>
+                  Name
+                </label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
+                  className={cyberInput}
+                  style={cyberInputStyle}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="text-xs font-medium text-content-muted">Description</label>
+              <div className="space-y-1.5">
+                <label className="block text-[10px] uppercase tracking-[2px]" style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}>
+                  Description
+                </label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-edge bg-field px-3 py-2 text-sm text-content outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/40"
+                  className={cyberInput}
+                  style={cyberInputStyle}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; }}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                 />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-lg px-4 py-2 text-sm text-content-muted hover:text-content"
-                onClick={() => setEditing(null)}
-              >
+              <button type="button" className="btn-cyber-ghost" onClick={() => setEditing(null)}>
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                className="btn-cyber"
                 disabled={update.isPending || !editName.trim()}
-                onClick={() =>
-                  update.mutate({
-                    id: editing.id,
-                    body: { name: editName.trim(), description: editDesc.trim() || undefined },
-                  })
-                }
+                onClick={() => update.mutate({ id: editing.id, body: { name: editName.trim(), description: editDesc.trim() || undefined } })}
               >
-                {update.isPending ? "Saving…" : "Save"}
+                {update.isPending ? "Saving…" : "[ Save ]"}
               </button>
             </div>
           </div>
@@ -266,35 +295,37 @@ export default function ClientsPage() {
       {/* Delete modal */}
       {deleteTarget && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
           role="dialog"
           onClick={() => setDeleteTarget(null)}
         >
           <div
-            className="w-full max-w-md rounded-xl border border-edge bg-surface p-6 shadow-2xl"
+            className="card-cyber w-full max-w-md p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold text-content">Delete client?</h2>
-            <p className="mt-2 text-sm text-content-muted">
-              This permanently removes{" "}
-              <span className="font-semibold text-content">{deleteTarget.name}</span> along with
-              all credentials and scans. This cannot be undone.
+            <h2
+              className="mb-2 text-[10px] font-semibold uppercase tracking-[2px]"
+              style={{ fontFamily: '"Orbitron", sans-serif', color: "#ff003c" }}
+            >
+              Confirm Deletion
+            </h2>
+            <p className="mt-3 text-sm text-content-secondary">
+              Permanently remove{" "}
+              <span className="font-semibold text-content">{deleteTarget.name}</span> along with all
+              credentials and scans. This cannot be undone.
             </p>
             <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-lg px-4 py-2 text-sm text-content-muted hover:text-content"
-                onClick={() => setDeleteTarget(null)}
-              >
+              <button type="button" className="btn-cyber-ghost" onClick={() => setDeleteTarget(null)}>
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+                className="btn-cyber-danger"
                 disabled={remove.isPending}
                 onClick={() => remove.mutate(deleteTarget.id)}
               >
-                {remove.isPending ? "Deleting…" : "Delete"}
+                {remove.isPending ? "Deleting…" : "[ Delete ]"}
               </button>
             </div>
           </div>

@@ -2,7 +2,6 @@ import { Shield } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, setToken } from "../api/client";
-import Aurora from "../components/Aurora";
 
 export default function LoginPage() {
   const nav = useNavigate();
@@ -23,72 +22,138 @@ export default function LoginPage() {
       setToken(res.access_token);
       nav("/dashboard", { replace: true });
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Login failed");
+      setErr(e instanceof Error ? e.message : "Authentication failed");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="dark flex min-h-screen items-center justify-center bg-page p-6">
-      <Aurora />
-      <div className="relative w-full max-w-md">
-        {/* Logo mark above form */}
+    <div className="hero-gradient relative flex min-h-screen items-center justify-center overflow-hidden p-6">
+      {/* Ambient green glow blobs */}
+      <div
+        className="pointer-events-none absolute -top-32 left-1/4 h-96 w-96 rounded-full opacity-10 blur-3xl"
+        style={{ background: "radial-gradient(circle, #00ff41 0%, transparent 70%)" }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-32 right-1/4 h-80 w-80 rounded-full opacity-8 blur-3xl"
+        style={{ background: "radial-gradient(circle, #00d4ff 0%, transparent 70%)" }}
+      />
+
+      <div className="relative w-full max-w-sm">
+        {/* Logo / title */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600/20 ring-1 ring-blue-500/30">
-            <Shield className="h-7 w-7 text-blue-400" />
+          <div
+            className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
+            style={{
+              background: "rgba(0,255,65,0.08)",
+              border: "1px solid rgba(0,255,65,0.3)",
+              boxShadow: "0 0 24px rgba(0,255,65,0.15)",
+            }}
+          >
+            <Shield className="h-8 w-8" style={{ color: "#00ff41" }} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-content">Azure CloudGuard</h1>
-          <p className="mt-1 text-sm text-content-muted">
-            Cloud security posture management for Azure
+          <h1
+            className="cursor-blink text-2xl font-black tracking-widest"
+            style={{
+              fontFamily: '"Orbitron", sans-serif',
+              color: "#00ff41",
+              textShadow: "0 0 20px rgba(0,255,65,0.4)",
+            }}
+          >
+            CloudGuard
+          </h1>
+          <p className="mt-2 text-xs tracking-widest" style={{ color: "rgba(0,212,255,0.7)", fontFamily: '"Orbitron", sans-serif' }}>
+            AZURE CSPM PLATFORM
           </p>
         </div>
 
-        <form
-          onSubmit={onSubmit}
-          className="space-y-4 rounded-xl border border-edge-soft bg-surface/80 p-8 shadow-2xl backdrop-blur"
-        >
-          <div>
-            <h2 className="text-base font-semibold text-content">Sign in to your account</h2>
-          </div>
+        {/* Form card */}
+        <div className="card-cyber p-7">
+          <h2
+            className="mb-5 text-xs font-semibold uppercase tracking-[3px]"
+            style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+          >
+            System Access
+          </h2>
 
           {err && (
-            <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-3 py-2 text-sm text-red-300">
+            <div
+              className="mb-4 rounded-lg px-3 py-2.5 text-xs"
+              style={{
+                background: "rgba(255,0,60,0.08)",
+                border: "1px solid rgba(255,0,60,0.3)",
+                color: "#ff4060",
+              }}
+            >
               {err}
             </div>
           )}
 
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-content-secondary">Email</label>
-            <input
-              className="w-full rounded-lg border border-edge bg-field px-3 py-2.5 text-sm text-content outline-none transition-colors ring-blue-500/40 focus:border-blue-500/60 focus:ring-2 placeholder-content-faint"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              autoComplete="username"
-              placeholder="you@example.com"
-            />
-          </div>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label
+                className="block text-[10px] uppercase tracking-[2px]"
+                style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+              >
+                Identity
+              </label>
+              <input
+                className="w-full rounded-lg px-3 py-2.5 text-xs text-content outline-none transition-all placeholder-content-faint"
+                style={{
+                  background: "rgba(20,20,30,0.8)",
+                  border: "1px solid rgba(0,255,65,0.15)",
+                  fontFamily: '"JetBrains Mono", monospace',
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; e.currentTarget.style.boxShadow = "0 0 10px rgba(0,255,65,0.1)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; e.currentTarget.style.boxShadow = "none"; }}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                autoComplete="username"
+                placeholder="operator@domain.com"
+              />
+            </div>
 
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-content-secondary">Password</label>
-            <input
-              className="w-full rounded-lg border border-edge bg-field px-3 py-2.5 text-sm text-content outline-none transition-colors ring-blue-500/40 focus:border-blue-500/60 focus:ring-2"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              autoComplete="current-password"
-            />
-          </div>
+            <div className="space-y-1.5">
+              <label
+                className="block text-[10px] uppercase tracking-[2px]"
+                style={{ fontFamily: '"Orbitron", sans-serif', color: "#4a4a5a" }}
+              >
+                Passphrase
+              </label>
+              <input
+                className="w-full rounded-lg px-3 py-2.5 text-xs text-content outline-none transition-all"
+                style={{
+                  background: "rgba(20,20,30,0.8)",
+                  border: "1px solid rgba(0,255,65,0.15)",
+                  fontFamily: '"JetBrains Mono", monospace',
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.5)"; e.currentTarget.style.boxShadow = "0 0 10px rgba(0,255,65,0.1)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,255,65,0.15)"; e.currentTarget.style.boxShadow = "none"; }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                autoComplete="current-password"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 disabled:opacity-50"
-          >
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-cyber w-full py-3 mt-2"
+            >
+              {loading ? "AUTHENTICATING…" : "[ ACCESS SYSTEM ]"}
+            </button>
+          </form>
+        </div>
+
+        <p
+          className="mt-5 text-center text-[10px]"
+          style={{ color: "rgba(74,74,90,0.8)", fontFamily: '"JetBrains Mono", monospace' }}
+        >
+          Unauthorized access is prohibited · All sessions logged
+        </p>
       </div>
     </div>
   );
