@@ -42,7 +42,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
       SCAN_OUTPUT_DIR: /data/scans
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
@@ -67,7 +67,7 @@ services:
       DOCKER_AVAILABLE: "true"
       PROWLER_IMAGE: ${PROWLER_IMAGE:-prowlercloud/prowler:stable}
       PROWLER_AUTO_PULL: ${PROWLER_AUTO_PULL:-true}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     volumes:
       - scan_data:/data/scans
       - /var/run/docker.sock:/var/run/docker.sock
@@ -87,7 +87,7 @@ services:
       DATABASE_URL: postgresql+psycopg2://prowler:prowler@postgres:5432/cloudaudit
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     depends_on:
       redis:
         condition: service_healthy

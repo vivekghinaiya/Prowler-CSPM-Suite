@@ -209,7 +209,7 @@ export default function AISummaryModal({
                 <XCircle className="h-6 w-6 text-red-400" />
               </div>
               <p className="max-w-md text-center text-sm text-red-400">
-                {(data as unknown as { error?: string })?.error || "Report generation failed. Check ANTHROPIC_API_KEY."}
+                {(data as unknown as { error?: string })?.error || "Report generation failed. Check OPENROUTER_API_KEY."}
               </p>
               <button
                 type="button"

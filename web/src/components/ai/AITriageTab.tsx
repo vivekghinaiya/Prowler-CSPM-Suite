@@ -176,7 +176,7 @@ export default function AITriageTab({
 
   // ── Failed state ─────────────────────────────────────────────────────────
   if (status === "failed") {
-    const errMsg = (data as unknown as { error?: string })?.error || "AI triage failed. Check ANTHROPIC_API_KEY and retry.";
+    const errMsg = (data as unknown as { error?: string })?.error || "AI triage failed. Check OPENROUTER_API_KEY and retry.";
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-900/30">

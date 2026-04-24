@@ -102,7 +102,7 @@ export default function AIRemediationCard({ findingId }: { findingId: string }) 
   }
 
   if (isError) {
-    const errMsg = error instanceof Error ? error.message : "AI remediation unavailable — check ANTHROPIC_API_KEY.";
+    const errMsg = error instanceof Error ? error.message : "AI remediation unavailable — check OPENROUTER_API_KEY.";
     return (
       <div className="mt-4 rounded-xl border border-red-800/50 bg-red-950/20 px-4 py-3 text-sm text-red-300">
         {errMsg}

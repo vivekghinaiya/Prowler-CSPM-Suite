@@ -43,12 +43,12 @@ router = APIRouter(tags=["ai"])
 
 @router.get("/ai/health", response_model=AIHealthOut)
 def ai_health(user: User = Depends(get_current_user)) -> AIHealthOut:
-    """Validate that the Anthropic API key is configured and working."""
+    """Validate that the OpenRouter API key is configured and working."""
     from app.services.ai_service import get_ai_service  # noqa: PLC0415
     ai = get_ai_service()
     if not ai._api_key:
         return AIHealthOut(configured=False, working=False,
-                           error="ANTHROPIC_API_KEY is not configured. Set it in your .env file.")
+                           error="OPENROUTER_API_KEY is not configured. Set it in your .env file.")
     ok, err = ai.validate_key()
     return AIHealthOut(configured=True, working=ok, error=err)
 
