@@ -44,8 +44,9 @@ def send_prowler_image_pull(*, force: bool = False) -> None:
     _app().send_task("cloudaudit.prowler_image_pull", kwargs={"force": force}, queue="cloudaudit")
 
 
-def send_ai_triage(scan_id: UUID) -> str:
-    result = _app().send_task("cloudaudit.ai_triage", args=[str(scan_id)], queue="cloudaudit")
+def send_ai_triage(scan_id: UUID, fingerprints: list[str] | None = None) -> str:
+    kwargs = {"fingerprints": fingerprints} if fingerprints else {}
+    result = _app().send_task("cloudaudit.ai_triage", args=[str(scan_id)], kwargs=kwargs, queue="cloudaudit")
     return result.id
 
 

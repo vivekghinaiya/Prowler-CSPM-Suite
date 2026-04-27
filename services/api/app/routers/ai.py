@@ -30,6 +30,7 @@ from app.schemas.ai import (
     AITriageAcceptAllIn,
     AITriageResultOut,
     AITriageSuggestionOut,
+    AITriageTriggerIn,
 )
 from app.security.audit_log import write_audit_log
 
@@ -91,6 +92,7 @@ _DECISION_MAP: dict[str, TriageState] = {
 def trigger_ai_triage(
     scan_id: UUID,
     request: Request,
+    body: AITriageTriggerIn | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> AITriageResultOut:
@@ -104,17 +106,21 @@ def trigger_ai_triage(
     if status["status"] == "running":
         return AITriageResultOut(status="running", processed=status.get("processed", 0), total=status.get("total", 0))
 
-    # Count untriaged findings for caller info
-    triage_fps = {t.fingerprint for t in db.query(FindingTriage).filter(FindingTriage.client_id == scan.client_id).all()}
-    total = db.query(Finding).filter(Finding.scan_id == scan_id, Finding.fingerprint.notin_(triage_fps) if triage_fps else True).count()
+    fingerprints = body.fingerprints if body else None
+
+    if fingerprints:
+        total = len(fingerprints)
+    else:
+        triage_fps = {t.fingerprint for t in db.query(FindingTriage).filter(FindingTriage.client_id == scan.client_id).all()}
+        total = db.query(Finding).filter(Finding.scan_id == scan_id, Finding.fingerprint.notin_(triage_fps) if triage_fps else True).count()
 
     _set_job_status(_triage_key(scan_id), {"status": "pending", "processed": 0, "total": total})
 
     from app.celery_client import send_ai_triage
-    send_ai_triage(scan_id)
+    send_ai_triage(scan_id, fingerprints=fingerprints)
 
     write_audit_log(db, actor_user_id=user.id, action="ai.triage.trigger", resource_type="scan",
-                    resource_id=str(scan_id), metadata={"untriaged_count": total},
+                    resource_id=str(scan_id), metadata={"count": total, "selective": bool(fingerprints)},
                     ip=request.client.host if request.client else None)
 
     return AITriageResultOut(status="pending", total=total)

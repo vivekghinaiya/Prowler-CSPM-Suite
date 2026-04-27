@@ -72,16 +72,31 @@ class AIService:
         raise AIServiceError(f"OpenRouter failed after {max_retries} attempts: {last_exc}") from last_exc
 
     def generate_json(self, prompt: str, **kw: Any) -> Any:
-        """Generate and parse JSON from the model response."""
+        """Generate and parse JSON — handles models that wrap JSON in prose or code fences."""
         raw = self.generate(prompt, **kw)
-        # Strip markdown code fences if the model wraps output
+
+        # 1. Strip markdown code fences
         cleaned = re.sub(r"^```(?:json)?\s*\n?", "", raw.strip(), flags=re.IGNORECASE)
-        cleaned = re.sub(r"\n?```$", "", cleaned.strip())
+        cleaned = re.sub(r"\n?```\s*$", "", cleaned.strip())
+        cleaned = cleaned.strip()
+
+        # 2. Try parsing the whole response directly
         try:
-            return json.loads(cleaned.strip())
-        except json.JSONDecodeError as exc:
-            logger.error("AI response is not valid JSON:\n%s", raw[:500])
-            raise AIServiceError(f"AI returned non-JSON: {exc}") from exc
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            pass
+
+        # 3. Extract the first JSON array [...] or object {...} even if surrounded by prose
+        for pattern in [r"(\[[\s\S]*\])", r"(\{[\s\S]*\})"]:
+            match = re.search(pattern, cleaned)
+            if match:
+                try:
+                    return json.loads(match.group(1))
+                except json.JSONDecodeError:
+                    continue
+
+        logger.error("AI response is not valid JSON:\n%s", raw[:500])
+        raise AIServiceError("AI returned non-JSON: could not extract JSON from response")
 
 
 def get_ai_service() -> AIService:

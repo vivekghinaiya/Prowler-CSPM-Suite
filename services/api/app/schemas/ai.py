@@ -57,6 +57,13 @@ class AITriageAcceptAllIn(BaseModel):
     min_confidence: int = Field(default=80, ge=0, le=100)
 
 
+class AITriageTriggerIn(BaseModel):
+    fingerprints: list[str] | None = Field(
+        default=None,
+        description="Optional list of fingerprints to triage. If omitted, all untriaged findings are processed.",
+    )
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Feature 2 — Remediation
 # ──────────────────────────────────────────────────────────────────────────────
